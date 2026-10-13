@@ -10,6 +10,10 @@ systemRoutes.get("/health", (_req, res) => {
   res.json({ ok: true, service: "mandate-api", time: new Date().toISOString() });
 });
 
+systemRoutes.head("/health", (_req, res) => {
+  res.json({ ok: true, service: "mandate-api", time: new Date().toISOString() });
+});
+
 // Proves the shared package works: this list comes from packages/shared.
 systemRoutes.get("/meta", (_req, res) => {
   res.json({ tiers: Tier.options });
