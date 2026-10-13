@@ -1,0 +1,7 @@
+persona,title,category,target_amount,target_date,saved_so_far,priority,auto_save
+maya,iPhone 17,gadget,1200.00,2027-04-12,150.00,1,yes
+maya,Trip to Kyoto,travel,500.00,2026-12-20,240.00,2,yes
+daniel,Car down payment,vehicle,8000.00,2028-10-01,1500.00,1,yes
+daniel,Holiday in Bali,travel,2500.00,2027-07-01,300.00,2,no
+aisha,Flat down payment,property,25000.00,2030-10-01,2000.00,1,yes
+aisha,Emergency fund,other,3000.00,2027-06-30,400.00,2,yes

@@ -1,0 +1,6 @@
+screen,element,text,notes
+Dashboard,Safe-to-spend label,Safe to spend today,Big number at the top
+Approvals,Empty state,Nothing waiting for your approval,
+Approvals,Approve button,Approve,
+Approvals,Reject button,Decline,
+Warning banner,Blocked document action,A document tried to make a payment. We blocked it and nothing moved.,Shown in red

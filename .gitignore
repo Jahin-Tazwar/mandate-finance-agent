@@ -1,0 +1,14 @@
+node_modules/
+dist/
+
+# Secrets: never commit. Copy .env.example to .env instead.
+.env
+
+# Runtime files (e.g. audit.jsonl); wiped on every Render restart anyway
+runtime/
+
+# Generated bundle for sharing with the team
+docs/team/*.zip
+
+# Competition brief (not ours to redistribute)
+Public file share - Files - OOU Cloud Storage.pdf

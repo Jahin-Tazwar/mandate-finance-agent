@@ -1,0 +1,11 @@
+date,account,description,merchant,amount,category,memo
+2026-05-01,checking,Family support transfer,Family,600.00,income,
+2026-05-01,checking,Rent May,Greenview Student Housing,-750.00,housing,
+2026-05-01,checking,Monthly transit pass,City Transit,-60.00,transport,
+2026-05-02,checking,Gym membership,FitZone,-29.99,subscriptions,
+2026-05-03,checking,Groceries,FreshMart,-42.18,groceries,
+2026-05-05,checking,Music streaming,Spotify,-11.99,subscriptions,
+2026-05-08,checking,Weekly pay,Campus Cafe Payroll,245.50,income,
+2026-05-09,checking,Lunch,Noodle Bar,-12.40,dining,
+2026-05-10,savings,Move to savings,Own savings,50.00,transfer,
+2026-05-10,checking,Move to savings,Own savings,-50.00,transfer,

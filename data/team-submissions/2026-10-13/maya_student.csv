@@ -1,0 +1,177 @@
+date,amount,category,account,description
+2026-05-01,-750.0,housing,checking,Monthly rent
+2026-05-01,500.0,income,checking,Family support
+2026-05-02,-45.0,subscriptions,checking,Gym membership unused
+2026-05-02,-12.99,subscriptions,checking,Spotify
+2026-05-03,-9.99,subscriptions,checking,Netflix
+2026-05-04,140.0,income,checking,Part-time bookstore pay
+2026-05-05,-15.5,groceries,checking,Campus cafe
+2026-05-06,-8.2,groceries,checking,Snacks
+2026-05-07,-55.0,utilities,checking,Phone bill
+2026-05-08,-12.5,transport,checking,Bus ride
+2026-05-09,-24.0,entertainment,checking,Movie tickets
+2026-05-10,-120.0,groceries,checking,Supermarket
+2026-05-11,125.0,income,checking,Part-time bookstore pay
+2026-05-12,-15.0,dining,checking,Coffee shop
+2026-05-13,-6.5,groceries,checking,Bakery
+2026-05-14,-18.0,shopping,checking,Stationery
+2026-05-15,-800.0,education,checking,Tuition payment installment
+2026-05-16,-22.0,health,checking,Pharmacy
+2026-05-17,-11.0,dining,checking,Fast food
+2026-05-18,150.0,income,checking,Part-time bookstore pay
+2026-05-19,-14.0,groceries,checking,Convenience store
+2026-05-20,-140.0,groceries,checking,Supermarket
+2026-05-21,-9.5,transport,checking,Subway fare
+2026-05-22,-30.0,transport,checking,Bus pass
+2026-05-23,-15.0,entertainment,checking,Board game cafe
+2026-05-24,-12.0,groceries,checking,Fruit stand
+2026-05-25,130.0,income,checking,Part-time bookstore pay
+2026-05-26,-25.0,shopping,checking,Online bookstore
+2026-05-27,-18.5,dining,checking,Lunch with friend
+2026-05-28,-25.0,entertainment,checking,Movie ticket
+2026-05-29,-10.0,subscriptions,checking,Cloud storage
+2026-05-30,-3.5,fees,checking,Low balance fee check
+2026-05-31,-12.0,groceries,checking,Convenience store
+2026-06-01,-750.0,housing,checking,Monthly rent
+2026-06-01,500.0,income,checking,Family support
+2026-06-02,-45.0,subscriptions,checking,Gym membership unused
+2026-06-02,-12.99,subscriptions,checking,Spotify
+2026-06-03,-9.99,subscriptions,checking,Netflix
+2026-06-04,145.0,income,checking,Part-time bookstore pay
+2026-06-05,-14.0,groceries,checking,Campus cafe
+2026-06-06,-9.0,groceries,checking,Snacks
+2026-06-07,-55.0,utilities,checking,Phone bill
+2026-06-08,-12.5,transport,checking,Bus ride
+2026-06-09,-20.0,entertainment,checking,Arcade
+2026-06-10,-115.0,groceries,checking,Supermarket
+2026-06-11,135.0,income,checking,Part-time bookstore pay
+2026-06-12,-16.0,dining,checking,Coffee shop
+2026-06-13,-7.0,groceries,checking,Bakery
+2026-06-14,-15.0,shopping,checking,Notebooks
+2026-06-15,-25.0,health,checking,Clinic co-pay
+2026-06-16,-12.0,dining,checking,Fast food
+2026-06-17,-18.0,groceries,checking,Convenience store
+2026-06-18,155.0,income,checking,Part-time bookstore pay
+2026-06-19,-14.0,groceries,checking,Campus cafe
+2026-06-20,-130.0,groceries,checking,Supermarket
+2026-06-21,-10.0,transport,checking,Subway fare
+2026-06-22,-30.0,transport,checking,Bus pass
+2026-06-23,-18.0,entertainment,checking,Museum entry
+2026-06-24,-11.0,groceries,checking,Fruit stand
+2026-06-25,140.0,income,checking,Part-time bookstore pay
+2026-06-26,-22.0,shopping,checking,Supplies
+2026-06-27,-19.0,dining,checking,Lunch with friend
+2026-06-28,-28.0,entertainment,checking,Concert ticket
+2026-06-29,-10.0,subscriptions,checking,Cloud storage
+2026-06-30,-14.0,groceries,checking,Convenience store
+2026-07-01,-750.0,housing,checking,Monthly rent
+2026-07-01,500.0,income,checking,Family support
+2026-07-02,-45.0,subscriptions,checking,Gym membership unused
+2026-07-02,-12.99,subscriptions,checking,Spotify
+2026-07-03,-9.99,subscriptions,checking,Netflix
+2026-07-04,130.0,income,checking,Part-time bookstore pay
+2026-07-05,-15.0,groceries,checking,Campus cafe
+2026-07-06,-8.0,groceries,checking,Snacks
+2026-07-07,-55.0,utilities,checking,Phone bill
+2026-07-08,-12.5,transport,checking,Bus ride
+2026-07-09,-22.0,entertainment,checking,Movie tickets
+2026-07-10,-125.0,groceries,checking,Supermarket
+2026-07-11,145.0,income,checking,Part-time bookstore pay
+2026-07-12,-14.0,dining,checking,Coffee shop
+2026-07-13,-6.0,groceries,checking,Bakery
+2026-07-14,-19.0,shopping,checking,Stationery
+2026-07-15,-20.0,health,checking,Pharmacy
+2026-07-16,-13.0,dining,checking,Fast food
+2026-07-17,-17.0,groceries,checking,Convenience store
+2026-07-18,150.0,income,checking,Part-time bookstore pay
+2026-07-19,-15.0,groceries,checking,Campus cafe
+2026-07-20,-135.0,groceries,checking,Supermarket
+2026-07-21,-9.0,transport,checking,Subway fare
+2026-07-22,-30.0,transport,checking,Bus pass
+2026-07-23,-16.0,entertainment,checking,Bowling
+2026-07-24,-13.0,groceries,checking,Fruit stand
+2026-07-25,135.0,income,checking,Part-time bookstore pay
+2026-07-26,-24.0,shopping,checking,Online store
+2026-07-27,-20.0,dining,checking,Lunch with friend
+2026-07-28,-26.0,entertainment,checking,Cinema
+2026-07-29,-10.0,subscriptions,checking,Cloud storage
+2026-07-30,-12.0,groceries,checking,Convenience store
+2026-07-31,-11.0,dining,checking,Cafe
+2026-08-01,-750.0,housing,checking,Monthly rent
+2026-08-01,500.0,income,checking,Family support
+2026-08-02,-45.0,subscriptions,checking,Gym membership unused
+2026-08-02,-12.99,subscriptions,checking,Spotify
+2026-08-03,-9.99,subscriptions,checking,Netflix
+2026-08-04,140.0,income,checking,Part-time bookstore pay
+2026-08-05,-15.5,groceries,checking,Campus cafe
+2026-08-06,-8.5,groceries,checking,Snacks
+2026-08-07,-55.0,utilities,checking,Phone bill
+2026-08-08,-12.5,transport,checking,Bus ride
+2026-08-09,-24.0,entertainment,checking,Movie tickets
+2026-08-10,-120.0,groceries,checking,Supermarket
+2026-08-11,150.0,income,checking,Part-time bookstore pay
+2026-08-12,-15.0,dining,checking,Coffee shop
+2026-08-13,-6.5,groceries,checking,Bakery
+2026-08-14,-18.0,shopping,checking,Stationery
+2026-08-15,-21.0,health,checking,Pharmacy
+2026-08-16,-12.0,dining,checking,Fast food
+2026-08-17,-18.0,groceries,checking,Convenience store
+2026-08-18,145.0,income,checking,Part-time bookstore pay
+2026-08-19,-14.0,groceries,checking,Campus cafe
+2026-08-20,-140.0,groceries,checking,Supermarket
+2026-08-21,-9.5,transport,checking,Subway fare
+2026-08-22,-30.0,transport,checking,Bus pass
+2026-08-23,-15.0,entertainment,checking,Board game cafe
+2026-08-24,-12.0,groceries,checking,Fruit stand
+2026-08-25,135.0,income,checking,Part-time bookstore pay
+2026-08-26,-25.0,shopping,checking,Online bookstore
+2026-08-27,-18.5,dining,checking,Lunch with friend
+2026-08-28,-25.0,entertainment,checking,Movie ticket
+2026-08-29,-10.0,subscriptions,checking,Cloud storage
+2026-08-30,-12.0,groceries,checking,Convenience store
+2026-08-31,-14.0,dining,checking,Cafe
+2026-09-01,-750.0,housing,checking,Monthly rent
+2026-09-01,500.0,income,checking,Family support
+2026-09-02,-45.0,subscriptions,checking,Gym membership unused
+2026-09-02,-12.99,subscriptions,checking,Spotify
+2026-09-03,-9.99,subscriptions,checking,Netflix
+2026-09-04,135.0,income,checking,Part-time bookstore pay
+2026-09-05,-15.0,groceries,checking,Campus cafe
+2026-09-06,-8.0,groceries,checking,Snacks
+2026-09-07,-55.0,utilities,checking,Phone bill
+2026-09-08,-12.5,transport,checking,Bus ride
+2026-09-09,-22.0,entertainment,checking,Movie tickets
+2026-09-10,-125.0,groceries,checking,Supermarket
+2026-09-11,140.0,income,checking,Part-time bookstore pay
+2026-09-12,-14.0,dining,checking,Coffee shop
+2026-09-13,-6.0,groceries,checking,Bakery
+2026-09-14,-19.0,shopping,checking,Stationery
+2026-09-15,-20.0,health,checking,Pharmacy
+2026-09-16,-13.0,dining,checking,Fast food
+2026-09-17,-17.0,groceries,checking,Convenience store
+2026-09-18,150.0,income,checking,Part-time bookstore pay
+2026-09-19,-15.0,groceries,checking,Campus cafe
+2026-09-20,-135.0,groceries,checking,Supermarket
+2026-09-21,-9.0,transport,checking,Subway fare
+2026-09-22,-30.0,transport,checking,Bus pass
+2026-09-23,-16.0,entertainment,checking,Bowling
+2026-09-24,-13.0,groceries,checking,Fruit stand
+2026-09-25,130.0,income,checking,Part-time bookstore pay
+2026-09-26,-24.0,shopping,checking,Online store
+2026-09-27,-20.0,dining,checking,Lunch with friend
+2026-09-28,-26.0,entertainment,checking,Cinema
+2026-09-29,-10.0,subscriptions,checking,Cloud storage
+2026-09-30,-12.0,groceries,checking,Convenience store
+2026-10-01,-750.0,housing,checking,Monthly rent
+2026-10-01,500.0,income,checking,Family support
+2026-10-02,-45.0,subscriptions,checking,Gym membership unused
+2026-10-02,-12.99,subscriptions,checking,Spotify
+2026-10-03,-9.99,subscriptions,checking,Netflix
+2026-10-04,140.0,income,checking,Part-time bookstore pay
+2026-10-05,-15.5,groceries,checking,Campus cafe
+2026-10-06,-8.5,groceries,checking,Snacks
+2026-10-07,-55.0,utilities,checking,Phone bill
+2026-10-08,-12.5,transport,checking,Bus ride
+2026-10-09,-24.0,entertainment,checking,Movie tickets
+2026-10-10,-120.0,groceries,checking,Supermarket
+2026-10-11,145.0,income,checking,Part-time bookstore pay

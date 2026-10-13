@@ -1,0 +1,4 @@
+id,name,profile,currency,checking_start,savings_start,credit_limit
+maya,Maya Chen,"International student, part-time cafe job, rent split with roommates",USD,450.00,300.00,0
+daniel,Daniel Okafor,"Young professional, monthly salary, many subscriptions, uses a credit card",USD,2100.00,5200.00,3000.00
+aisha,Aisha Rahman,"Gig worker: daily ride-share payouts + weekly delivery payouts, both change a lot",USD,900.00,200.00,1000.00

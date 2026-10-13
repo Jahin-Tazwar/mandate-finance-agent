@@ -1,0 +1,20 @@
+{
+  "name": "mandate",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,magenta \"npm run dev -w @mandate/api\" \"npm run dev -w @mandate/web\"",
+    "dev:api": "npm run dev -w @mandate/api",
+    "dev:web": "npm run dev -w @mandate/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "seed:placeholder": "npm run seed:placeholder -w @mandate/api --"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}

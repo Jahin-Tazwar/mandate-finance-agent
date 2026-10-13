@@ -1,0 +1,2 @@
+id,date,reporter,screen,steps_to_reproduce,expected,actual,screenshot_link,severity,status
+B001,2026-10-16,Name,Approvals,"1. Open Approvals 2. Click Approve on the CityPower bill",Bill marked paid and balance drops by $180,Nothing happens,link,high,open

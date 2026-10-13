@@ -1,0 +1,177 @@
+date,amount,category,account,description
+2026-05-01,-1200.0,housing,checking,Monthly rent
+2026-05-02,-45.2,dining,credit,Restaurant dinner
+2026-05-03,-85.0,utilities,checking,Electricity bill
+2026-05-04,-60.0,utilities,checking,Internet bill
+2026-05-05,-45.0,subscriptions,credit,Cloud storage
+2026-05-05,-14.99,subscriptions,credit,Streaming service A
+2026-05-06,-18.99,subscriptions,credit,Streaming service B
+2026-05-07,-9.99,subscriptions,credit,News subscription
+2026-05-08,-12.99,subscriptions,credit,Music subscription
+2026-05-09,-50.0,shopping,credit,Department store
+2026-05-10,-35.0,dining,credit,Brunch
+2026-05-11,-12.0,groceries,credit,Grocery store
+2026-05-12,-120.0,shopping,credit,Clothing store
+2026-05-13,-28.5,dining,credit,Lunch
+2026-05-14,-35.5,dining,credit,Lunch with client
+2026-05-14,-35.5,dining,credit,Lunch with client Duplicate charge
+2026-05-15,-65.0,shopping,credit,Bookstore
+2026-05-16,-45.0,dining,credit,Dinner out
+2026-05-17,-15.0,groceries,credit,Convenience store
+2026-05-18,-75.0,transport,credit,Fuel
+2026-05-19,-22.0,dining,credit,Coffee shop
+2026-05-20,-210.0,shopping,credit,Electronics accessory
+2026-05-21,-31.0,dining,credit,Dinner
+2026-05-22,-55.0,shopping,credit,Home goods
+2026-05-23,-40.0,entertainment,credit,Theater tickets
+2026-05-24,-18.0,dining,credit,Fast food
+2026-05-25,3500.0,income,checking,Monthly salary
+2026-05-26,-450.0,transfer,checking,Credit card payment
+2026-05-26,450.0,transfer,credit,Credit card payment received
+2026-05-27,-25.0,dining,credit,Lunch
+2026-05-28,-30.0,shopping,credit,Online store
+2026-05-29,-45.0,dining,credit,Dinner
+2026-05-30,-14.0,groceries,credit,Supermarket
+2026-05-31,-38.0,dining,credit,Cafe
+2026-06-01,-1200.0,housing,checking,Monthly rent
+2026-06-02,-42.0,dining,credit,Restaurant dinner
+2026-06-03,-90.0,utilities,checking,Electricity bill
+2026-06-04,-60.0,utilities,checking,Internet bill
+2026-06-05,-45.0,subscriptions,credit,Cloud storage
+2026-06-05,-14.99,subscriptions,credit,Streaming service A
+2026-06-06,-18.99,subscriptions,credit,Streaming service B
+2026-06-07,-9.99,subscriptions,credit,News subscription
+2026-06-08,-12.99,subscriptions,credit,Music subscription
+2026-06-09,-55.0,shopping,credit,Department store
+2026-06-10,-32.0,dining,credit,Brunch
+2026-06-11,-15.0,groceries,credit,Grocery store
+2026-06-12,-110.0,shopping,credit,Clothing store
+2026-06-13,-29.0,dining,credit,Lunch
+2026-06-14,-40.0,dining,credit,Lunch with client
+2026-06-15,-70.0,shopping,credit,Bookstore
+2026-06-16,-48.0,dining,credit,Dinner out
+2026-06-17,-18.0,groceries,credit,Convenience store
+2026-06-18,-75.0,transport,credit,Fuel
+2026-06-19,-20.0,dining,credit,Coffee shop
+2026-06-20,-190.0,shopping,credit,Electronics accessory
+2026-06-21,-35.0,dining,credit,Dinner
+2026-06-22,-60.0,shopping,credit,Home goods
+2026-06-23,-45.0,entertainment,credit,Concert tickets
+2026-06-24,-16.0,dining,credit,Fast food
+2026-06-25,3500.0,income,checking,Monthly salary
+2026-06-26,-520.0,transfer,checking,Credit card payment
+2026-06-26,520.0,transfer,credit,Credit card payment received
+2026-06-27,-22.0,dining,credit,Lunch
+2026-06-28,-35.0,shopping,credit,Online store
+2026-06-29,-40.0,dining,credit,Dinner
+2026-06-30,-15.0,groceries,credit,Supermarket
+2026-07-01,-1200.0,housing,checking,Monthly rent
+2026-07-02,-48.0,dining,credit,Restaurant dinner
+2026-07-03,-88.0,utilities,checking,Electricity bill
+2026-07-04,-60.0,utilities,checking,Internet bill
+2026-07-05,-45.0,subscriptions,credit,Cloud storage
+2026-07-05,-14.99,subscriptions,credit,Streaming service A
+2026-07-06,-18.99,subscriptions,credit,Streaming service B
+2026-07-07,-9.99,subscriptions,credit,News subscription
+2026-07-08,-12.99,subscriptions,credit,Music subscription
+2026-07-09,-45.0,shopping,credit,Department store
+2026-07-10,-30.0,dining,credit,Brunch
+2026-07-11,-14.0,groceries,credit,Grocery store
+2026-07-12,-130.0,shopping,credit,Clothing store
+2026-07-13,-27.0,dining,credit,Lunch
+2026-07-14,-38.0,dining,credit,Lunch with colleagues
+2026-07-15,-60.0,shopping,credit,Bookstore
+2026-07-16,-50.0,dining,credit,Dinner out
+2026-07-17,-16.0,groceries,credit,Convenience store
+2026-07-18,-75.0,transport,credit,Fuel
+2026-07-19,-24.0,dining,credit,Coffee shop
+2026-07-20,-150.0,shopping,credit,Electronics accessory
+2026-07-21,-29.0,dining,credit,Dinner
+2026-07-22,-50.0,shopping,credit,Home goods
+2026-07-23,-40.0,entertainment,credit,Theater tickets
+2026-07-24,-15.0,dining,credit,Fast food
+2026-07-25,3500.0,income,checking,Monthly salary
+2026-07-26,-480.0,transfer,checking,Credit card payment
+2026-07-26,480.0,transfer,credit,Credit card payment received
+2026-07-27,-28.0,dining,credit,Lunch
+2026-07-28,-32.0,shopping,credit,Online store
+2026-07-29,-42.0,dining,credit,Dinner
+2026-07-30,-16.0,groceries,credit,Supermarket
+2026-07-31,-35.0,dining,credit,Cafe
+2026-08-01,-1200.0,housing,checking,Monthly rent
+2026-08-02,-46.0,dining,credit,Restaurant dinner
+2026-08-03,-82.0,utilities,checking,Electricity bill
+2026-08-04,-60.0,utilities,checking,Internet bill
+2026-08-05,-45.0,subscriptions,credit,Cloud storage
+2026-08-05,-14.99,subscriptions,credit,Streaming service A
+2026-08-06,-18.99,subscriptions,credit,Streaming service B
+2026-08-07,-9.99,subscriptions,credit,News subscription
+2026-08-08,-12.99,subscriptions,credit,Music subscription
+2026-08-09,-60.0,shopping,credit,Department store
+2026-08-10,-34.0,dining,credit,Brunch
+2026-08-11,-13.0,groceries,credit,Grocery store
+2026-08-12,-115.0,shopping,credit,Clothing store
+2026-08-13,-30.0,dining,credit,Lunch
+2026-08-14,-36.0,dining,credit,Lunch with client
+2026-08-15,-65.0,shopping,credit,Bookstore
+2026-08-16,-42.0,dining,credit,Dinner out
+2026-08-17,-14.0,groceries,credit,Convenience store
+2026-08-18,-75.0,transport,credit,Fuel
+2026-08-19,-21.0,dining,credit,Coffee shop
+2026-08-20,-180.0,shopping,credit,Electronics accessory
+2026-08-21,-33.0,dining,credit,Dinner
+2026-08-22,-58.0,shopping,credit,Home goods
+2026-08-23,-45.0,entertainment,credit,Concert tickets
+2026-08-24,-17.0,dining,credit,Fast food
+2026-08-25,3500.0,income,checking,Monthly salary
+2026-08-26,-490.0,transfer,checking,Credit card payment
+2026-08-26,490.0,transfer,credit,Credit card payment received
+2026-08-27,-26.0,dining,credit,Lunch
+2026-08-28,-29.0,shopping,credit,Online store
+2026-08-29,-44.0,dining,credit,Dinner
+2026-08-30,-15.0,groceries,credit,Supermarket
+2026-08-31,-37.0,dining,credit,Cafe
+2026-09-01,-1200.0,housing,checking,Monthly rent
+2026-09-02,-44.0,dining,credit,Restaurant dinner
+2026-09-03,-80.0,utilities,checking,Electricity bill
+2026-09-04,-60.0,utilities,checking,Internet bill
+2026-09-05,-45.0,subscriptions,credit,Cloud storage
+2026-09-05,-14.99,subscriptions,credit,Streaming service A
+2026-09-06,-18.99,subscriptions,credit,Streaming service B
+2026-09-07,-9.99,subscriptions,credit,News subscription
+2026-09-08,-12.99,subscriptions,credit,Music subscription
+2026-09-09,-50.0,shopping,credit,Department store
+2026-09-10,-31.0,dining,credit,Brunch
+2026-09-11,-12.0,groceries,credit,Grocery store
+2026-09-12,-125.0,shopping,credit,Clothing store
+2026-09-13,-28.0,dining,credit,Lunch
+2026-09-14,-35.0,dining,credit,Lunch with client
+2026-09-15,-70.0,shopping,credit,Bookstore
+2026-09-16,-45.0,dining,credit,Dinner out
+2026-09-17,-15.0,groceries,credit,Convenience store
+2026-09-18,-75.0,transport,credit,Fuel
+2026-09-19,-22.0,dining,credit,Coffee shop
+2026-09-20,-200.0,shopping,credit,Electronics accessory
+2026-09-21,-30.0,dining,credit,Dinner
+2026-09-22,-52.0,shopping,credit,Home goods
+2026-09-23,-40.0,entertainment,credit,Theater tickets
+2026-09-24,-16.0,dining,credit,Fast food
+2026-09-25,3500.0,income,checking,Monthly salary
+2026-09-26,-500.0,transfer,checking,Credit card payment
+2026-09-26,500.0,transfer,credit,Credit card payment received
+2026-09-27,-25.0,dining,credit,Lunch
+2026-09-28,-31.0,shopping,credit,Online store
+2026-09-29,-41.0,dining,credit,Dinner
+2026-09-30,-14.0,groceries,credit,Supermarket
+2026-10-01,-1200.0,housing,checking,Monthly rent
+2026-10-02,-45.0,dining,credit,Restaurant dinner
+2026-10-03,-83.0,utilities,checking,Electricity bill
+2026-10-04,-60.0,utilities,checking,Internet bill
+2026-10-05,-45.0,subscriptions,credit,Cloud storage
+2026-10-05,-14.99,subscriptions,credit,Streaming service A
+2026-10-06,-18.99,subscriptions,credit,Streaming service B
+2026-10-07,-9.99,subscriptions,credit,News subscription
+2026-10-08,-12.99,subscriptions,credit,Music subscription
+2026-10-09,-50.0,shopping,credit,Department store
+2026-10-10,-32.0,dining,credit,Brunch
+2026-10-11,-14.0,groceries,credit,Grocery store
