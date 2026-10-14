@@ -10,7 +10,9 @@ import { loadSeed, type StoreState } from "./seed";
  */
 let state: StoreState | null = null;
 
+/** The loaded data. */
 function current(): StoreState {
+  // Reject: someone forgot to load the data at startup
   if (!state) throw new Error("Store not initialised: call initStore() first");
   return state;
 }
@@ -34,17 +36,21 @@ export function listPersonas(): Persona[] {
 
 export function getPersona(personaId: string): Persona {
   const persona = current().personas.get(personaId);
+
+  // Reject: unknown persona → 404 (the error handler in app.ts turns this into the response)
   if (!persona) throw notFound(`Persona "${personaId}"`);
   return persona;
 }
 
 export function listAccounts(personaId: string): Account[] {
-  getPersona(personaId);
+  getPersona(personaId); // 404 if the persona doesn't exist
   return [...current().accounts.values()].filter((a) => a.personaId === personaId);
 }
 
 export function getAccount(personaId: string, type: AccountType): Account {
   const account = listAccounts(personaId).find((a) => a.type === type);
+
+  // Reject: should never happen (every persona gets all 3 accounts)
   if (!account) throw notFound(`${type} account for "${personaId}"`);
   return account;
 }
@@ -63,6 +69,7 @@ export function subscriptionUsage(personaId: string): ReadonlyMap<string, string
 
 // ---- Transactions ----
 
+/** Filters for the transactions list. Every filter is optional; limit/offset are for paging. */
 export interface TransactionQuery {
   from?: string;
   to?: string;
@@ -72,10 +79,17 @@ export interface TransactionQuery {
   offset: number;
 }
 
+/** One page of a persona's transactions (newest first), plus how many match in total. */
 export function queryTransactions(personaId: string, q: TransactionQuery): TransactionPage {
-  getPersona(personaId);
-  const accountId = q.account && listAccounts(personaId).find((a) => a.type === q.account)?.id;
+  getPersona(personaId); // 404 if the persona doesn't exist
 
+  // Filter by account type → find that account's id, e.g. "credit" → "acc_daniel_crd"
+  let accountId: string | undefined;
+  if (q.account) {
+    accountId = listAccounts(personaId).find((a) => a.type === q.account)?.id;
+  }
+
+  // Keep a transaction only if it passes every filter that was given (missing filter = pass)
   const matches = current()
     .transactions.get(personaId)!
     .filter(
@@ -86,5 +100,6 @@ export function queryTransactions(personaId: string, q: TransactionQuery): Trans
         (!accountId || t.accountId === accountId),
     );
 
+  // One page, e.g. offset 50, limit 50 → matches 51–100
   return { total: matches.length, items: matches.slice(q.offset, q.offset + q.limit) };
 }

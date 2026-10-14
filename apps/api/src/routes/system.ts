@@ -10,6 +10,8 @@ systemRoutes.get("/health", (_req, res) => {
   res.json({ ok: true, service: "mandate-api", time: new Date().toISOString() });
 });
 
+// Explicit HEAD handler. Optional: the GET route above is registered first and already
+// answers HEAD requests, so in practice this one never runs.
 systemRoutes.head("/health", (_req, res) => {
   res.json({ ok: true, service: "mandate-api", time: new Date().toISOString() });
 });
