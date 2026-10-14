@@ -255,3 +255,39 @@ After the first version, the output was printed for all 3 personas and read like
 2. Compare http://localhost:4000/api/personas/aisha/pay-cycle with Maya's: daily vs weekly.
 3. In `.env`, set `DEMO_TODAY=2026-10-30` and restart the API. Watch Maya's safe-to-spend and bills change (rent is now 2 days away). Remove it afterwards.
 4. In `analytics/budget.ts`, delete the line `if (skipOneOffs && isOneOff(opts.series, t)) continue;` and run `npm test`. The "one-off doesn't create an education budget" test fails: that's the tuition bug coming back. Undo it.
+
+---
+
+## Day 3: The wish planner (Oct 14), in 5 steps
+
+Example: Maya's **iPhone, $1,200 by Apr 12, $150 already saved**.
+
+1. **What's left to save?** $1,200 − $150 = **$1,050**.
+2. **How many paydays until then?** She's paid every Friday. Fridays from Oct 16 to Apr 9 = **26**.
+3. **How much per payday?** $1,050 ÷ 26 = **$40.39** (rounded up to the cent).
+4. **Can she afford it?** She usually has **$47.06** left each Friday. $40.39 is 86% of that:
+   - up to 60% → **on track**
+   - up to 100% → **tight** ← Maya
+   - more → **not realistic**
+5. **When will she get it?** At $40.39 a week, after 26 Fridays: **Apr 9, 3 days early**.
+
+**Several wishes take turns by priority.** The iPhone (priority 1) takes $40.39 of her $47.06. The Kyoto trip (priority 2) only gets the **$6.67 left**, so it's "not realistic", and the app suggests a date that works.
+
+**Wish impact.** The iPhone gets $40.39 a week, about $5.77 a day. Spending $60 now = $60 ÷ $5.77 ≈ **11 more days** of waiting.
+
+**Where it lives**
+| File | Job |
+|---|---|
+| `wishes/planner.ts` | The math for ONE wish (steps 1–5) |
+| `wishes/index.ts` | Plans ALL of a persona's wishes in priority order; impact |
+| `routes/wishes.ts` | The web addresses (list, preview, create, change, delete) |
+| `store/index.ts` | Keeps wishes in memory (add, change, delete) |
+| `test/wishes.test.ts` | 18 tests, including Maya's exact numbers |
+
+### Try it yourself
+1. Open http://localhost:4000/api/personas/maya/wishes. Find "tight" and "$40.39".
+2. Pause the iPhone, then look at the Kyoto trip again. What changed, and why?
+   ```bash
+   curl -X PATCH http://localhost:4000/api/wishes/wish_maya_1 -H "Content-Type: application/json" -d "{\"paused\": true}"
+   ```
+3. Reset afterwards: `curl -X POST http://localhost:4000/api/admin/reset`

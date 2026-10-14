@@ -134,7 +134,7 @@ Each screen lists: purpose · layout · data · states · interactions. UI wordi
 │ 2 actions need your approval                      [Review ->] │
 ├───────────────────────────────────┬───────────────────────────┤
 │ Your wishes                       │ Next 30 days              │
-│ 12%  iPhone 17    $46.20/Fri      │ [line chart: balance]     │
+│ 12%  iPhone 17    $40.39/Fri      │ [line chart: balance]     │
 │      tight - ETA Apr 9            │ May dip below $200        │
 │ 48%  Trip         $20.00/Fri      │   on Nov 1                │
 │ [+ New wish]                      │                           │
@@ -160,15 +160,15 @@ Each screen lists: purpose · layout · data · states · interactions. UI wordi
 ```
 ┌───────────────────────────────────────────────────────────────┐
 │ Your wishes                                      [+ New wish] │
-│ You're paid weekly (Fridays). Wishes use $66.20 of your usual │
-│ $74.50 left over each payday.  [##################--]  89%    │
+│ You're paid weekly (Fridays). Wishes use $66.39 of your usual │
+│ $47.06 left over each payday.  [##########]  141% (over)      │
 ├───────────────────────────────────────────────────────────────┤
 │ ┌────────────┐ ┌────────────┐ ┌────────────┐                  │
 │ │ 12%        │ │ 48%        │ │ 100%       │                  │
 │ │ iPhone 17  │ │ Trip       │ │ Laptop     │                  │
 │ │ $150 of    │ │ $240 of    │ │ $900 of    │                  │
 │ │ $1,200     │ │ $500       │ │ $900       │                  │
-│ │ $46.20     │ │ $20.00     │ │            │                  │
+│ │ $40.39     │ │ $20.00     │ │            │                  │
 │ │ every Fri  │ │ every Fri  │ │            │                  │
 │ │ TIGHT      │ │ ON TRACK   │ │ ACHIEVED   │                  │
 │ │ ETA Apr 9  │ │ ETA Dec 18 │ │            │                  │
@@ -179,7 +179,7 @@ Each screen lists: purpose · layout · data · states · interactions. UI wordi
 
 - **Data:** `GET /personas/:id/wishes` (includes `totalPerPaydayCents`, `surplusPerPaydayCents`, `overCommitted`), `pay-cycle`.
 - **The commitment bar** compares total wish savings per payday with the usual surplus. If `overCommitted` is true, flag it with: *"Your wishes need more than you usually have left. Lower a target or move a date."*
-- **Wish card:** progress (%), title, saved / target, per-payday amount phrased by cadence ("$46.20 every Friday", "$6.60 a day", "$200 every month"), status, ETA + early/late.
+- **Wish card:** progress (%), title, saved / target, per-payday amount phrased by cadence ("$40.39 every Friday", "$6.60 a day", "$200 every month"), status, ETA + early/late.
 - **Empty state:** "What are you saving for? A phone, a car, a flat. Add your first wish and we'll make a plan around your paydays." + [New wish].
 
 ### 4.3 New wish / edit wish (form with live plan)
@@ -190,14 +190,14 @@ Each screen lists: purpose · layout · data · states · interactions. UI wordi
 ┌──────────────────────────────┬──────────────────────────────────┐
 │ What's your wish?            │ Your plan                        │
 │ [ iPhone 17              ]   │                                  │
-│                              │   Save $46.20 every Friday       │
+│                              │   Save $40.39 every Friday       │
 │ Category                     │   for 26 weeks                   │
 │ (Gadget)(Vehicle)(Property)  │                                  │
 │ (Travel)(Education)(Luxury)  │   Status: TIGHT                  │
-│ (Other)                      │   Uses 62% of what you usually   │
+│ (Other)                      │   Uses 86% of what you usually   │
 │                              │   have left each payday          │
 │ How much?     [ $1,200    ]  │                                  │
-│ Already saved [ $150      ]  │   Tip: cut dining by $10 a week  │
+│ Already saved [ $150      ]  │   Tip: cut dining by $21 a week  │
 │ By when? [ Apr 12, 2027  ]   │   to make this comfortable       │
 │   quick: [3mo][6mo][1yr]     │                                  │
 │          [2yr][5yr]          │   ETA: Apr 9, 2027 (3d early)    │
@@ -213,7 +213,7 @@ Each screen lists: purpose · layout · data · states · interactions. UI wordi
 - **Data:** `POST /personas/:id/wishes/preview` on every change (debounce 300 ms, cancel the previous request); `POST /personas/:id/wishes` on save; `PATCH /wishes/:id` when editing.
 - **Validation (client side, before calling preview):** title required; amount > 0; date in the future. Show inline errors under the field.
 - **Category** values: `gadget`, `vehicle`, `property`, `travel`, `education`, `luxury`, `other`. For `property` / `vehicle`, show a hint under the amount: *"Tip: for big purchases, use your down payment as the target."*
-- **Mobile:** the plan panel moves below the form and stays visible as a sticky summary ("$46.20 every Friday · tight").
+- **Mobile:** the plan panel moves below the form and stays visible as a sticky summary ("$40.39 every Friday · tight").
 
 ### 4.4 Wish detail
 
@@ -225,15 +225,15 @@ Each screen lists: purpose · layout · data · states · interactions. UI wordi
 ├───────────────────────────────────────────────────────────────┤
 │ [chart: projected savings line vs. target line, actual dots]  │
 ├───────────────────────────────────────────────────────────────┤
-│ Plan: $46.20 every Friday - next: Fri Oct 16 - Auto-save: ON  │
+│ Plan: $40.39 every Friday - next: Fri Oct 16 - Auto-save: ON  │
 │ [Add money now]                                               │
 ├───────────────────────────────────────────────────────────────┤
 │ Advice                                                        │
-│ - Cut dining by $10 a week to make this comfortable.          │
+│ - Cut dining by $21 a week to make this comfortable.          │
 ├───────────────────────────────────────────────────────────────┤
 │ History                                                       │
-│ Oct 9   +$46.20   Agent (auto-save)   done                    │
-│ Oct 2   +$46.20   Agent (auto-save)   done                    │
+│ Oct 9   +$40.39   Agent (auto-save)   done                    │
+│ Oct 2   +$40.39   Agent (auto-save)   done                    │
 │ Sep 28  +$20.00   You                 done                    │
 └───────────────────────────────────────────────────────────────┘
 ```
@@ -253,11 +253,11 @@ Each screen lists: purpose · layout · data · states · interactions. UI wordi
 │   checked: forecast, wishes                                   │
 │   Yes. Your safe-to-spend today is $23.50, so it would come   │
 │   from this week's cushion. It also delays your iPhone by     │
-│   9 days.                                                     │
+│   11 days.                                                    │
 │ ┌───────────────────────────────────────────────────────────┐ │
 │ │ Agent suggests: Pay Ticketly $60.00                       │ │
 │ │ Your rules: payments over $50 need approval   [L2]        │ │
-│ │ Delays iPhone 17 by 9 days                                │ │
+│ │ Delays iPhone 17 by 11 days                                ││
 │ │                              [Decline] [Approve]          │ │
 │ └───────────────────────────────────────────────────────────┘ │
 ├───────────────────────────────────────────────────────────────┤
@@ -291,7 +291,7 @@ Each screen lists: purpose · layout · data · states · interactions. UI wordi
 
 ```
 Today
- 10:02  done     Saved $46.20 toward iPhone 17          L3  Automatic
+ 10:02  done     Saved $40.39 toward iPhone 17          L3  Automatic
  10:02  done     Paid CityPower $180.00                 L3  Automatic
  10:01  waiting  Cancel FitZone ($29.99/mo)             L2  Waiting for you
  09:58  blocked  Transfer $500 to new account           Blocked
@@ -345,7 +345,7 @@ Current rules: version 3 - signed Oct 15, 09:12
 │ Audit log             Chain status: Verified (312 entries)    │
 │                       [Verify again]                          │
 ├───────────────────────────────────────────────────────────────┤
-│ #42  10:02  action_executed  Saved $46.20 toward iPhone 17    │
+│ #42  10:02  action_executed  Saved $40.39 toward iPhone 17    │
 │      hash 9f1c...e2   prev 47aa...b1                          │
 │ #41  09:58  action_denied    Blocked transfer of $500...      │
 ├───────────────────────────────────────────────────────────────┤
@@ -369,7 +369,7 @@ Current rules: version 3 - signed Oct 15, 09:12
 | **`ActionCard`** | Chat, Approvals, Activity | The most important component: summary, amount, agent reason (labelled as coming from the agent), rule reasons (labelled as coming from your rules), labels, wish impact, Approve/Decline when pending |
 | **Action result toast** | after approve / contribute / payday | Three outcomes: "Done: saved $20 toward iPhone 17" · "Needs your approval" · "Blocked: over your daily limit" |
 | `WishCard` + progress indicator | Dashboard, Wishes | Progress from `progressPct` |
-| `CadenceText` | Wishes | `weekly + 4620` → "$46.20 every Friday"; `daily` → "a day"; `monthly` → "every month" |
+| `CadenceText` | Wishes | `weekly + 4039` → "$40.39 every Friday"; `daily` → "a day"; `monthly` → "every month" |
 | `StreamingText` | Chat | Appends SSE deltas |
 | `EmptyState`, `ErrorState`, `Skeleton` | all lists | Never a blank screen |
 | `AuthGate` | app start | Calls `GET /auth/me`; shows Sign-in on `401`, the app otherwise |
@@ -426,9 +426,9 @@ apps/web/src/
 
 ## 9. Demo-critical moments (must look great)
 
-1. **Wish form:** typing "iPhone, $1,200, 6 months" and watching the plan appear: *"$46.20 every Friday · tight"*.
+1. **Wish form:** typing "iPhone, $1,200, 6 months" and watching the plan appear: *"$40.39 every Friday · tight"*.
 2. **Payday:** pressing *Run payday* and watching Activity fill with automatic actions, one approval (confirmed with the PIN) and a wish contribution.
-3. **Wish impact:** "This delays your iPhone by 9 days" on an approval card and in chat.
+3. **Wish impact:** "This delays your iPhone by 11 days" on an approval card and in chat.
 4. **Injection:** uploading the malicious bill → the warning banner and a **Blocked** item in Activity.
 5. **Audit:** "Verified" plus a working "View transaction" link.
 

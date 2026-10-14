@@ -45,5 +45,8 @@ export function addMonths(date: string, n: number, day = dayOfMonth(date)): stri
 /** "2026-11-01" → "Nov 1" */
 export const shortDate = (date: string) => `${MONTH_NAMES[Number(date.slice(5, 7)) - 1]} ${dayOfMonth(date)}`;
 
+/** "2027-04-09" → "Apr 9, 2027" (for dates that may be in another year) */
+export const longDate = (date: string) => `${shortDate(date)}, ${date.slice(0, 4)}`;
+
 /** The month before, e.g. "2026-01" → "2025-12" */
 export const previousMonth = (month: string) => addMonths(`${month}-01`, -1).slice(0, 7);

@@ -4,6 +4,7 @@ import { HttpError } from "./http/errors";
 import { analyticsRoutes } from "./routes/analytics";
 import { personaRoutes } from "./routes/personas";
 import { systemRoutes } from "./routes/system";
+import { wishRoutes } from "./routes/wishes";
 
 /**
  * Builds the Express app without starting it. Tests import this and send
@@ -17,6 +18,7 @@ export function createApp() {
   app.use("/api", systemRoutes);
   app.use("/api", personaRoutes);
   app.use("/api", analyticsRoutes);
+  app.use("/api", wishRoutes);
 
   // Unknown /api routes get a clear JSON 404 instead of an HTML page.
   app.use("/api", (_req, res) => {

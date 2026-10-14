@@ -1,7 +1,7 @@
 import type { Account, AccountType, Category, Persona, Transaction, TransactionPage } from "@mandate/shared";
 import { config } from "../config";
 import { notFound } from "../http/errors";
-import { loadSeed, type StoreState } from "./seed";
+import { loadSeed, type StoreState, type StoredWish } from "./seed";
 
 /**
  * The in-memory store: the ONLY module that reads or changes data.
@@ -102,4 +102,63 @@ export function queryTransactions(personaId: string, q: TransactionQuery): Trans
 
   // One page, e.g. offset 50, limit 50 → matches 51–100
   return { total: matches.length, items: matches.slice(q.offset, q.offset + q.limit) };
+}
+
+// ---- Wishes (these change while the app runs; a reset brings back the seed wishes) ----
+
+/** A persona's wishes, most important first (priority 1 before 2). */
+export function listWishes(personaId: string): readonly StoredWish[] {
+  getPersona(personaId); // 404 if the persona doesn't exist
+  const wishes = [...current().wishes.get(personaId)!];
+
+  // Same priority: keep the order they were added in (sort doesn't reorder equal items)
+  return wishes.sort((a, b) => a.priority - b.priority);
+}
+
+/** One wish by id, from any persona. */
+export function getWish(wishId: string): StoredWish {
+  for (const wishes of current().wishes.values()) {
+    const wish = wishes.find((w) => w.id === wishId);
+    if (wish) return wish;
+  }
+  // Reject: no persona has this wish → 404
+  throw notFound(`Wish "${wishId}"`);
+}
+
+/** The fields a caller provides when adding a wish (the store fills in the rest). */
+export type NewWish = Omit<StoredWish, "id" | "personaId" | "paused" | "createdAt">;
+
+/** Adds a wish and returns it with its new id, e.g. Maya's 3rd wish → "wish_maya_3". */
+export function addWish(personaId: string, fields: NewWish): StoredWish {
+  getPersona(personaId); // 404 if the persona doesn't exist
+  const wishes = current().wishes.get(personaId)!;
+
+  // Next number = highest one used so far + 1 (so ids never clash)
+  // e.g. ["wish_maya_1", "wish_maya_2"] → 3
+  const used = wishes.map((w) => Number(w.id.split("_").at(-1)) || 0);
+  const next = Math.max(0, ...used) + 1;
+
+  const wish: StoredWish = {
+    ...fields,
+    id: `wish_${personaId}_${next}`,
+    personaId,
+    paused: false,
+    createdAt: new Date().toISOString(),
+  };
+  wishes.push(wish);
+  return wish;
+}
+
+/** Changes some fields of a wish and returns it. */
+export function updateWish(wishId: string, changes: Partial<NewWish & { paused: boolean }>): StoredWish {
+  const wish = getWish(wishId); // 404 if it doesn't exist
+  Object.assign(wish, changes);
+  return wish;
+}
+
+/** Removes a wish. (Money already saved for it simply stays in savings.) */
+export function deleteWish(wishId: string): void {
+  const wish = getWish(wishId); // 404 if it doesn't exist
+  const wishes = current().wishes.get(wish.personaId)!;
+  wishes.splice(wishes.indexOf(wish), 1);
 }

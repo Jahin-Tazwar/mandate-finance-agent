@@ -57,7 +57,8 @@ const UsageRow = z.object({
 
 // ---- What the loader produces ----
 
-export interface SeedWish {
+/** A wish as kept in memory (the planner adds the plan, status, ETA... when it's read). */
+export interface StoredWish {
   id: string;
   personaId: string;
   title: string;
@@ -67,6 +68,8 @@ export interface SeedWish {
   savedCents: number;
   priority: number;
   autoSave: boolean;
+  paused: boolean;
+  createdAt: string;
 }
 
 export interface StoreState {
@@ -76,7 +79,7 @@ export interface StoreState {
   accounts: Map<string, Account>;
   /** Each persona's transactions, newest first. */
   transactions: Map<string, Transaction[]>;
-  wishes: Map<string, SeedWish[]>;
+  wishes: Map<string, StoredWish[]>;
   /** persona → merchant → last used date (null = never). Missing merchant = no usage data. */
   usage: Map<string, Map<string, string | null>>;
 }
@@ -174,6 +177,8 @@ export function loadSeed(seedDir: string): StoreState {
       savedCents: w.saved_so_far,
       priority: w.priority,
       autoSave: w.auto_save,
+      paused: false,
+      createdAt: state.loadedAt,
     });
   });
 

@@ -300,10 +300,12 @@ Detected from income history. `payday` is a ready-to-show label: `"Fridays"`, `"
 
 ## Wishes
 
+All wishes of a persona are planned **together, in priority order**: each wish only gets what's left over after the wishes above it. Plans save a fixed amount **every payday** (daily, weekly or monthly, from `pay-cycle`).
+
 ### The `Wish` object
+Real example (Maya's iPhone):
 ```json
 {
-  "id": "wish_maya_iphone",
   "personaId": "maya",
   "title": "iPhone 17",
   "category": "gadget",
@@ -312,81 +314,135 @@ Detected from income history. `payday` is a ready-to-show label: `"Fridays"`, `"
   "targetDate": "2027-04-12",
   "priority": 1,
   "autoSave": true,
+  "paused": false,
   "status": "tight",
   "progressPct": 12.5,
   "plan": {
     "cadence": "weekly",
-    "perPaydayCents": 4620,
+    "perPaydayCents": 4039,
     "paydaysLeft": 26,
     "nextContributionDate": "2026-10-16"
   },
-  "eta": { "date": "2027-04-09", "daysVsTarget": -3 },
+  "eta": {
+    "date": "2027-04-09",
+    "daysVsTarget": -3
+  },
   "advice": [
-    "Saving $46.20 each Friday uses 62% of what you usually have left over.",
-    "Cut dining by $10 a week to make this comfortable."
+    "Saving $40.39 each Friday uses 86% of what you usually have left over.",
+    "Spending $21 less on dining a week would make this comfortable."
   ],
-  "createdAt": "2026-10-12T09:00:00.000Z"
+  "id": "wish_maya_1",
+  "createdAt": "2026-10-14T15:23:30.866Z"
 }
 ```
-- `eta.daysVsTarget`: negative = early, positive = late, `null` if it can't be reached at the current pace.
-- `status`: `on_track` (comfortable), `tight` (doable but uses most of the surplus), `not_realistic` (needs more than the surplus), `achieved`, `paused`.
+- `status`: `on_track` (uses ≤ 60% of what's left over), `tight` (≤ 100%), `not_realistic` (more, or the date is before the next payday), `achieved`, `paused`.
+- `eta`: when it's reached at the pace that's actually affordable. `daysVsTarget` negative = early, positive = late. `null` = can't be reached at the current pace (or paused).
+- `plan.nextContributionDate`: `null` when achieved, paused, or the date is too soon.
+- `advice`: ready-to-show sentences (how much of the surplus it uses; a spending cut if tight; a realistic date if not).
 
-### 🛠 `GET /api/personas/:personaId/wishes` (Oct 14)
-Returns `Wish[]`, sorted by `priority`, plus a summary:
+### ✅ `GET /api/personas/:personaId/wishes`
+Wishes sorted by `priority`, plus whether they fit together. Real example (Maya, iPhone shortened):
 ```json
 {
-  "wishes": [ { "...": "Wish" } ],
-  "totalPerPaydayCents": 6620,
-  "surplusPerPaydayCents": 7450,
-  "overCommitted": false
+  "wishes": [
+    {
+      "...": "iPhone 17 (above)"
+    },
+    {
+      "personaId": "maya",
+      "title": "Trip to Kyoto",
+      "category": "travel",
+      "targetCents": 50000,
+      "savedCents": 24000,
+      "targetDate": "2026-12-20",
+      "priority": 2,
+      "autoSave": true,
+      "paused": false,
+      "status": "not_realistic",
+      "progressPct": 48,
+      "plan": {
+        "cadence": "weekly",
+        "perPaydayCents": 2600,
+        "paydaysLeft": 10,
+        "nextContributionDate": "2026-10-16"
+      },
+      "eta": {
+        "date": "2027-07-09",
+        "daysVsTarget": 201
+      },
+      "advice": [
+        "Saving $26 each Friday is more than the $6.67 you usually have left over.",
+        "At what you can afford ($6.67 each Friday), you'd reach it around Jul 9, 2027. Move the date, or lower the target."
+      ],
+      "id": "wish_maya_2",
+      "createdAt": "2026-10-14T15:23:30.866Z"
+    }
+  ],
+  "totalPerPaydayCents": 6639,
+  "surplusPerPaydayCents": 4706,
+  "overCommitted": true
 }
 ```
 
-### 🛠 `POST /api/personas/:personaId/wishes/preview` (Oct 14)
-Live plan calculator for the "new wish" form. **Doesn't save anything.** Call it as the user types (debounce ~300 ms).
+### ✅ `POST /api/personas/:personaId/wishes/preview`
+Live plan for the "new wish" form. **Saves nothing.** Call it as the user types (debounce ~300 ms). The draft is planned *after* the existing wishes unless you send a `priority`.
 Request:
 ```json
-{ "title": "iPhone 17", "category": "gadget", "targetCents": 120000, "targetDate": "2027-04-12", "savedCents": 0 }
+{ "title": "Laptop", "category": "gadget", "targetCents": 90000, "targetDate": "2027-06-01" }
 ```
-Response: a `Wish` object without `id` / `createdAt`.
+Optional: `savedCents` (default 0), `priority`, `autoSave` (default true). Response: a `Wish` without `id` / `createdAt`. `targetDate` must be after today → otherwise `400`.
 
-### 🛠 `POST /api/personas/:personaId/wishes` (Oct 14)
-Same body as preview, plus optional `"priority": 2` and `"autoSave": true` → returns the saved `Wish` (201).
+### ✅ `POST /api/personas/:personaId/wishes`
+Same body as preview → `201` with the saved `Wish` (id like `wish_maya_3`).
 
-### 🛠 `GET /api/wishes/:wishId` (Oct 14)
-The `Wish`, plus its history:
+### ✅ `GET /api/wishes/:wishId`
+The `Wish`, its saving history, and a projection for a chart (one point per payday; long plans are thinned to ~60 points). Real example (Maya's iPhone, first 3 projection points shown):
 ```json
 {
-  "wish": { "...": "Wish" },
-  "contributions": [
-    { "id": "wc_1", "date": "2026-10-09", "amountCents": 4620, "source": "agent", "actionId": "act_77aa" }
-  ],
+  "wish": {
+    "...": "Wish"
+  },
+  "contributions": [],
   "projection": [
-    { "date": "2026-10-16", "savedCents": 19620 },
-    { "date": "2026-10-23", "savedCents": 24240 }
+    {
+      "date": "2026-10-16",
+      "savedCents": 19039
+    },
+    {
+      "date": "2026-10-23",
+      "savedCents": 23078
+    },
+    {
+      "date": "2026-10-30",
+      "savedCents": 27117
+    }
   ]
 }
 ```
-`projection` is the expected savings curve for a progress chart (one point per payday).
+`contributions` stays empty until auto-save runs (from Oct 16–17); each item will look like `{ "id": "wc_1", "date": "2026-10-16", "amountCents": 4039, "source": "agent", "actionId": "act_77aa" }`.
 
-### 🛠 `PATCH /api/wishes/:wishId` (Oct 14)
-Any of: `title`, `targetCents`, `targetDate`, `priority`, `autoSave`, `paused` → returns the updated `Wish` with a recalculated plan.
+### ✅ `PATCH /api/wishes/:wishId`
+Any of: `title`, `targetCents`, `targetDate`, `priority`, `autoSave`, `paused` → the updated `Wish` with a recalculated plan. Unknown fields → `400`. Pausing a wish frees its money for the wishes below it.
 
-### 🛠 `DELETE /api/wishes/:wishId` (Oct 14)
-Removes the wish. Money already saved stays in savings. Returns `204`.
+### ✅ `DELETE /api/wishes/:wishId`
+Removes the wish → `204`. Money already saved stays in savings.
 
-### 🛠 `POST /api/wishes/:wishId/contribute` (Oct 15)
+### 🛠 `POST /api/wishes/:wishId/contribute` (Oct 15–16)
 Manual top-up from checking to savings. Request: `{ "amountCents": 2000 }` → returns an `Action` (it goes through the policy engine like everything else, so it can be `executed`, `pending_approval` or `denied`).
 
-### 🛠 `GET /api/personas/:personaId/wishes/impact?amountCents=6000` (Oct 15)
-"What does this purchase do to my wishes?"
+### ✅ `GET /api/personas/:personaId/wishes/impact?amountCents=6000`
+"What does this purchase do to my wishes?" Money spent is money not saved, so the top wish that's currently receiving money arrives later. Real example (Maya):
 ```json
 {
   "amountCents": 6000,
   "impacts": [
-    { "wishId": "wish_maya_iphone", "title": "iPhone 17", "delayDays": 9 }
+    {
+      "wishId": "wish_maya_1",
+      "title": "iPhone 17",
+      "delayDays": 11
+    }
   ],
-  "message": "Buying this delays your iPhone 17 by 9 days."
+  "message": "Spending $60 delays your iPhone 17 by 11 days."
 }
 ```
 Also included automatically in payment `Action`s as `wishImpact` (same shape as `impacts`).
@@ -421,7 +477,7 @@ event: error     data: {"error":"..."}
   "status": "pending_approval",
   "reasons": ["Amount is over your $100 approval limit."],
   "agentRationale": "The bill is due in 4 days and checking can cover it.",
-  "wishImpact": [{ "wishId": "wish_daniel_car", "title": "Car down payment", "delayDays": 4 }],
+  "wishImpact": [{ "wishId": "wish_daniel_1", "title": "Car down payment", "delayDays": 7 }],
   "createdAt": "2026-10-12T09:15:00.000Z"
 }
 ```
@@ -551,6 +607,7 @@ Show `warnings` prominently (red banner). This is the injection demo.
 ---
 
 ## Changelog
+- **v3.2 (Oct 14):** wishes are **live** (list, preview, create, detail, patch, delete, impact; examples are real output). Wish ids are `wish_<persona>_<n>`; `Wish` gained `paused`; `plan.nextContributionDate` can be `null`. Only `contribute` is still pending (needs the policy engine).
 - **v3.1 (Oct 13):** budget, forecast, subscriptions, bills and pay-cycle are **live** (examples are real output). `payday` is now a display label (`"Fridays"`); subscriptions gained `accountId`, `lastCharged`, `nextCharge`; bills gained `accountId`; `avgSurplusPerCycleCents` now means left over after *all* normal spending.
 - **v3 (Oct 13):** demo auth: `/api/auth/*`, session cookie, `401`/`403` on persona-scoped routes, `pin` on approve / sign / agent-on, `x-admin-key` on reset, `actor` on audit entries. Takes effect **Oct 15**; until then everything stays open.
 - **v2.1 (Oct 12):** personas, accounts, transactions and admin reset are live. IDs are stable across resets (`acc_maya_chk`, `tx_maya_0001`…).
