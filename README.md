@@ -23,6 +23,18 @@ The API loads its data from the CSV files in `data/seed/` at startup (see `PRODU
 - Web app: http://localhost:5173
 - API: http://localhost:4000/api/health
 
+## Deploy (Render, one web service)
+
+Express serves the API **and** the built website from the same address, so the browser's `/api/...` calls need no CORS setup.
+
+| Render setting | Value |
+|---|---|
+| Build command | `npm ci --include=dev && npm run build` |
+| Start command | `npm start` |
+| Health check path | `/api/health` |
+
+`npm run build` puts the website in `apps/web/dist/`. When that folder exists, the API serves it: real files (scripts, styles) directly, and any other page address (e.g. `/wishes/new`) gets `index.html` so React picks the screen. Unknown `/api/...` addresses still get a JSON 404. Locally, `npm run build && npm start` runs it the same way at http://localhost:4000.
+
 ## Project layout
 
 ```
@@ -40,6 +52,7 @@ docs/            API contract, team guide, learning notes, (later) architecture 
 |---|---|
 | `npm run dev` | Start API and web app together |
 | `npm run dev:api` / `npm run dev:web` | Start one of them |
+| `npm run build` / `npm start` | Build the website, then run API + website on one port (what Render does) |
 | `npm test` | Run the automated tests |
 | `npm run typecheck` | Check types across all packages |
 | `npm run seed:placeholder` | Generate placeholder seed data (won't overwrite existing files; add `-- --force` to overwrite) |

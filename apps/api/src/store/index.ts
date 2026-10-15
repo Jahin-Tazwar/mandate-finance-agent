@@ -1,4 +1,5 @@
-import type { Account, AccountType, Category, Persona, Transaction, TransactionPage } from "@mandate/shared";
+import type { Account, AccountType, Category, Mandate, Persona, Transaction, TransactionPage } from "@mandate/shared";
+import { appendAudit, resetAudit } from "../audit";
 import { config } from "../config";
 import { notFound } from "../http/errors";
 import { loadSeed, type StoreState, type StoredWish } from "./seed";
@@ -20,6 +21,16 @@ function current(): StoreState {
 /** Loads (or reloads) everything from the seed CSVs. Throws if any row is invalid. */
 export function initStore(seedDir = config.seedDir): StoreState {
   state = loadSeed(seedDir);
+
+  // A fresh demo gets a fresh audit log; its first entry records the load
+  resetAudit();
+  appendAudit({
+    personaId: null,
+    eventType: "seed_loaded",
+    actor: { type: "system" },
+    summary: `Demo data loaded: ${state.personas.size} personas.`,
+    payload: { personas: [...state.personas.keys()] },
+  });
   return state;
 }
 
@@ -161,4 +172,18 @@ export function deleteWish(wishId: string): void {
   const wish = getWish(wishId); // 404 if it doesn't exist
   const wishes = current().wishes.get(wish.personaId)!;
   wishes.splice(wishes.indexOf(wish), 1);
+}
+
+// ---- Rules (mandate) and the kill switch ----
+
+/** The persona's signed rules. */
+export function getMandate(personaId: string): Mandate {
+  getPersona(personaId); // 404 if the persona doesn't exist
+  return current().mandates.get(personaId)!;
+}
+
+/** false = the kill switch is on: the agent may only watch. */
+export function isAgentEnabled(personaId: string): boolean {
+  getPersona(personaId);
+  return current().agentEnabled.get(personaId)!;
 }

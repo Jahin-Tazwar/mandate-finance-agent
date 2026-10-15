@@ -120,7 +120,7 @@ You own everything the user sees. The Tech Lead owns everything behind it.
    - User consent and the right to know why an automated decision was made
    - Payment authorization: who approved what, and keeping records
    - Risks of AI in finance and how our design handles each one
-3. **From Fri Oct 16:** try every attack in the real app and fill in `result_when_tested`.
+3. **From Fri Oct 16:** try every attack in the real app and fill in `result_when_tested`. **Already possible now:** send your attack list to the Tech Lead. The rules engine has a "dry run" check that answers allow / ask / block for each attack without moving any money, so you can get first results before the AI agent exists.
 4. **From Thu Oct 15:** start the **Security Self-Assessment** draft with the Tech Lead (a required deliverable). It must cover the permission tiers **and** sign-in: who can see what, why approvals need a PIN, and the honest limits (public demo passwords, no password reset). The details are in `PRODUCT.pdf` §6.1 and §12.
 
 ---

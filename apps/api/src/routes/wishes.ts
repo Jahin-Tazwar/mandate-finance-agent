@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { z } from "zod";
 import { WishInput, WishPatch } from "@mandate/shared";
+import { appendAudit } from "../audit";
 import { config } from "../config";
-import { addWish, deleteWish, getPersona, updateWish } from "../store";
+import { usd } from "../lib/money";
+import { addWish, deleteWish, getPersona, getWish, updateWish } from "../store";
 import { getPlannedWish, getWishDetail, getWishImpact, getWishList, nextPriority, previewWish } from "../wishes";
 
 export const wishRoutes = Router();
@@ -55,6 +57,15 @@ wishRoutes.post("/personas/:personaId/wishes", (req, res) => {
     priority: input.priority ?? nextPriority(personaId),
     autoSave: input.autoSave,
   });
+
+  // Record it in the audit log
+  appendAudit({
+    personaId,
+    eventType: "wish_created",
+    actor: { type: "user", personaId },
+    summary: `Created wish "${stored.title}" (${usd(stored.targetCents)} by ${stored.targetDate}).`,
+    payload: { wishId: stored.id, ...input },
+  });
   res.status(201).json(getPlannedWish(stored.id));
 });
 
@@ -67,11 +78,28 @@ wishRoutes.get("/wishes/:wishId", (req, res) => {
 wishRoutes.patch("/wishes/:wishId", (req, res) => {
   const changes = PatchBody.parse(req.body); // unknown fields → 400
   const stored = updateWish(req.params.wishId, changes);
+
+  // Record what changed, e.g. "Changed wish "iPhone 17": paused"
+  appendAudit({
+    personaId: stored.personaId,
+    eventType: "wish_updated",
+    actor: { type: "user", personaId: stored.personaId },
+    summary: `Changed wish "${stored.title}": ${Object.keys(changes).join(", ")}.`,
+    payload: { wishId: stored.id, changes },
+  });
   res.json(getPlannedWish(stored.id));
 });
 
 // Remove a wish → 204 (money already saved stays in savings)
 wishRoutes.delete("/wishes/:wishId", (req, res) => {
-  deleteWish(req.params.wishId);
+  const wish = getWish(req.params.wishId); // 404 if unknown (before deleting, to log its name)
+  deleteWish(wish.id);
+  appendAudit({
+    personaId: wish.personaId,
+    eventType: "wish_deleted",
+    actor: { type: "user", personaId: wish.personaId },
+    summary: `Deleted wish "${wish.title}".`,
+    payload: { wishId: wish.id },
+  });
   res.status(204).end();
 });

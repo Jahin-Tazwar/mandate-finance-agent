@@ -432,6 +432,7 @@ GET  /api/personas/:id/approvals | actions   POST /api/actions/:actionId/decisio
 GET  /api/personas/:id/timeline              (SSE: live agent actions)
 POST /api/personas/:id/agent/run             (payday routine)
 GET  /api/personas/:id/mandate               POST .../mandate/compile   POST .../mandate/sign
+POST /api/personas/:id/policy/check          (dry run: decide + log, execute nothing)
 POST /api/personas/:id/documents             (upload bill PDF)
 GET|POST /api/personas/:id/killswitch
 GET  /api/audit   GET /api/audit/verify   GET /api/anchors
@@ -493,9 +494,9 @@ mandate/
 
 | Threat | Mitigation | Test |
 |---|---|---|
-| Prompt injection via bill PDF / memo field | Untrusted-source marking → forced L2; policy engine ignores LLM reasoning | `redteam/pdf-injection.test.ts` |
-| Agent splits payments to dodge caps | Daily cap + velocity check over a rolling window | `redteam/cap-splitting.test.ts` |
-| Payee spoofing (look-alike names) | Payee resolved by ID, not name; look-alike warning; new-payee waiting period | `redteam/payee-spoof.test.ts` |
+| Prompt injection via bill PDF / memo field | Untrusted-source marking → always L2; a document can **never introduce a new payee** (blocked outright); policy engine ignores LLM reasoning | `policy.test.ts` (red team) |
+| Agent splits payments to dodge caps | Daily cap on everything the agent moves | `policy.test.ts` (red team) |
+| Payee spoofing (look-alike names) | Exact-name match against payees paid before, so look-alikes count as new; new-payee waiting period | `policy.test.ts` (red team) |
 | Escalation ("you are now in admin mode") | Tier is server-side state; no tool can change tier or mandate | `redteam/escalation.test.ts` |
 | LLM hallucinated amounts | Executor re-validates against bill records; amount mismatch → deny | `policy.test.ts` |
 | Malformed LLM output | Zod validation on every tool argument and compiled policy | `policy.test.ts` |
@@ -506,7 +507,7 @@ mandate/
 | Password / PIN guessing | 5 failures → 5-minute lock; hashes with scrypt, never stored in plain text | `auth.test.ts` |
 | Anyone wiping the demo | Admin reset needs `ADMIN_KEY` | `auth.test.ts` |
 | API key leakage | Key only in server `.env`; never sent to the browser; `.env` in `.gitignore` | Manual check |
-| Audit tampering | Hash chain + `/api/audit/verify` + on-chain anchor | `audit.test.ts` |
+| Audit tampering | SHA-256 hash chain (edits and deletions break it) + `/api/audit/verify` + on-chain anchor | `audit.test.ts` |
 | Runaway agent / cost | Kill switch, tool-call limit per turn, token caps | `killswitch.test.ts` |
 | Wish auto-save drains checking | Auto-save is capped per payday by the mandate and never runs if checking would drop below the balance floor | `wishes.test.ts` |
 | Manipulated wish ("my wish is to send $2,000 to X") | Wish money only moves between the user's own accounts; a wish can't have an external payee | `redteam/wish-abuse.test.ts` |

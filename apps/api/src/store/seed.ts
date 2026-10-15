@@ -4,10 +4,12 @@ import {
   Category,
   WishCategory,
   type Account,
+  type Mandate,
   type Persona,
   type Transaction,
   type WishCategory as WishCategoryT,
 } from "@mandate/shared";
+import { defaultMandate } from "../policy/mandate";
 import { SeedErrors, dateColumn, moneyColumn, optionalText, readCsv, yesNoColumn } from "./csv";
 
 // ---- Row formats of the seed files (what the team writes in Excel) ----
@@ -82,6 +84,10 @@ export interface StoreState {
   wishes: Map<string, StoredWish[]>;
   /** persona → merchant → last used date (null = never). Missing merchant = no usage data. */
   usage: Map<string, Map<string, string | null>>;
+  /** Each persona's signed rules. */
+  mandates: Map<string, Mandate>;
+  /** false = the kill switch is on (the agent may only watch). */
+  agentEnabled: Map<string, boolean>;
 }
 
 // Every persona gets these 3 accounts
@@ -106,6 +112,8 @@ export function loadSeed(seedDir: string): StoreState {
     transactions: new Map(),
     wishes: new Map(),
     usage: new Map(),
+    mandates: new Map(),
+    agentEnabled: new Map(),
   };
 
   // ---- Personas, their accounts and their transactions ----
@@ -155,6 +163,10 @@ export function loadSeed(seedDir: string): StoreState {
     // Empty lists, filled from the next files
     state.wishes.set(row.id, []);
     state.usage.set(row.id, new Map());
+
+    // Everyone starts with the default rules and the agent switched on
+    state.mandates.set(row.id, defaultMandate(row.id, state.loadedAt));
+    state.agentEnabled.set(row.id, true);
   }
 
   // ---- Wishes ----

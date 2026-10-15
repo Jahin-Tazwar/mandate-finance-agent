@@ -22,4 +22,15 @@ export const config = {
   today: process.env.DEMO_TODAY ?? "2026-10-12",
   /** Checking never planned below this (until mandates exist; then the mandate's floor is used). */
   defaultBalanceFloorCents: 20_000,
+  /**
+   * The audit log is also appended to this file (wiped on Render restarts; that's fine).
+   * Off while tests run (Vitest sets VITEST), so tests don't write files.
+   */
+  auditFile: process.env.VITEST ? null : path.resolve(rootDir, process.env.AUDIT_FILE ?? "runtime/audit.jsonl"),
+  /**
+   * The built frontend (`npm run build -w @mandate/web` creates it). When this folder
+   * exists, Express serves the website too, so Render needs only one service.
+   * Off while tests run, so tests behave the same whether or not you've built it.
+   */
+  webDistDir: process.env.VITEST ? null : path.resolve(rootDir, process.env.WEB_DIST_DIR ?? "apps/web/dist"),
 };

@@ -506,29 +506,93 @@ Request: `{ "enabled": true }` → `{ "enabled": true }`. While enabled, the age
 
 ## Mandate (user rules)
 
-### 🛠 `GET /api/personas/:personaId/mandate` (Oct 16)
+### ✅ `GET /api/personas/:personaId/mandate`
+The persona's signed rules: the plain-English text, the rules as data (amounts in cents), and one sentence per rule. Every persona starts with version 1. Real example (Maya):
 ```json
 {
-  "version": 3,
-  "naturalLanguage": "Never let checking drop below $200. Ask me before any payment over $100 or to anyone new.",
-  "signedAt": "2026-10-15T09:12:00.000Z",
+  "version": 1,
+  "naturalLanguage": "Never let my checking go below $200. Ask me before any payment over $100 or to anyone new. Save up to $80 for my wishes every payday. Never move more than $500 a day.",
+  "signedAt": "2026-10-14T17:14:26.218Z",
   "policy": {
     "defaultTier": "L2",
     "rules": [
-      { "type": "balance_floor", "account": "checking", "minCents": 20000 },
-      { "type": "amount_cap", "perTxCents": 10000, "aboveTier": "L2" },
-      { "type": "new_payee", "tier": "L2", "cooldownHours": 24 },
-      { "type": "daily_cap", "maxCents": 50000 }
+      {
+        "type": "balance_floor",
+        "account": "checking",
+        "minCents": 20000
+      },
+      {
+        "type": "amount_cap",
+        "perTxCents": 10000,
+        "aboveTier": "L2"
+      },
+      {
+        "type": "new_payee",
+        "tier": "L2",
+        "cooldownHours": 24
+      },
+      {
+        "type": "daily_cap",
+        "maxCents": 50000
+      },
+      {
+        "type": "wish_autosave",
+        "trigger": "income_detected",
+        "maxPerPaydayCents": 8000,
+        "tier": "L3"
+      }
     ]
   },
   "summary": [
-    "Checking never goes below $200.00.",
-    "Payments over $100.00 need your approval.",
-    "New payees need your approval and a 24-hour wait.",
-    "The agent can move at most $500.00 per day."
+    "Checking never goes below $200.",
+    "Payments over $100 happen only with your approval.",
+    "Paying someone new happens only with your approval, and they count as new for 24 hours.",
+    "The agent can move at most $500 a day.",
+    "On payday, up to $80 goes to your wishes automatically.",
+    "Anything else happens only with your approval."
   ]
 }
 ```
+Rule types: `balance_floor`, `amount_cap`, `new_payee`, `daily_cap`, `sweep`, `wish_autosave` (see `Rule` in `@mandate/shared`).
+
+### ✅ `POST /api/personas/:personaId/policy/check` (dry run)
+"Would the agent be allowed to do this?" The policy engine decides and the check is written to the audit log, but **nothing is executed**. Useful for showing the rules in action, the red-team tests, and manual attack testing before the agent exists.
+Request: a `ProposedAction` (see `@mandate/shared`): `type` = `payment` · `transfer` · `wish_contribution` · `cancel_subscription` · `dispute`, plus `source` = `user` · `agent` · `untrusted`.
+Real example: an injected payment from a bill PDF (Daniel):
+```json
+{
+  "action": {
+    "source": "untrusted",
+    "type": "payment",
+    "fromAccount": "checking",
+    "payee": "Account 99-1234",
+    "amountCents": 50000
+  },
+  "decision": "deny",
+  "tier": "L0",
+  "reasons": [
+    "A document asked to pay Account 99-1234, someone you've never paid. Documents can't add new payees; if this is a real new biller, add them yourself."
+  ]
+}
+```
+Real example: the agent wants to pay Daniel's electricity bill:
+```json
+{
+  "action": {
+    "source": "agent",
+    "type": "payment",
+    "fromAccount": "checking",
+    "payee": "CityPower",
+    "amountCents": 13280
+  },
+  "decision": "require_approval",
+  "tier": "L2",
+  "reasons": [
+    "$132.80 is over your $100 limit per payment."
+  ]
+}
+```
+`decision`: `allow` (L3, do it) · `require_approval` (L2/L1, ask the user) · `deny` (blocked). The first reason is always the deciding one.
 
 ### 🛠 `POST /api/personas/:personaId/mandate/compile` (Oct 16)
 Request: `{ "text": "Never let checking drop below $200..." }` → `{ "policy": {...}, "summary": [...], "warnings": [] }` (not saved yet: show it to the user for review).
@@ -556,26 +620,50 @@ Show `warnings` prominently (red banner). This is the injection demo.
 
 ## Audit & on-chain
 
-### 🛠 `GET /api/audit` (Oct 14)
-`?personaId=daniel&limit=100`
+### ✅ `GET /api/audit`
+Newest first. Optional `?personaId=daniel&limit=100` (max 1000). Real example (the blocked attack above):
 ```json
 [
   {
-    "seq": 42,
-    "ts": "2026-10-12T09:15:02.000Z",
-    "eventType": "action_denied",
-    "actor": { "type": "agent", "personaId": "daniel" },
-    "summary": "Blocked transfer of $500.00 to new payee (source: untrusted document)",
-    "hash": "9f1c…e2",
-    "prevHash": "47aa…b1"
+    "personaId": "daniel",
+    "eventType": "policy_check",
+    "actor": {
+      "type": "agent",
+      "personaId": "daniel"
+    },
+    "summary": "Needs approval for payment of $132.80 to CityPower (source: agent).",
+    "payload": {
+      "action": {
+        "source": "agent",
+        "type": "payment",
+        "fromAccount": "checking",
+        "payee": "CityPower",
+        "amountCents": 13280
+      },
+      "decision": "require_approval",
+      "tier": "L2",
+      "reasons": [
+        "$132.80 is over your $100 limit per payment."
+      ]
+    },
+    "seq": 3,
+    "ts": "2026-10-14T17:14:26.296Z",
+    "prevHash": "fa41fae02edad301e2b0ace4d45ab92a4c4d6e386eeb4db433d6837445303061",
+    "hash": "67389801e02aa248dc9c93f873b966b669ad138799ae22cc769d112ec2a6640f"
   }
 ]
 ```
+`eventType` so far: `seed_loaded`, `policy_check`, `wish_created`, `wish_updated`, `wish_deleted` (more from Oct 15: actions, approvals, sign-ins). `actor.type`: `user` · `agent` · `system`. Each entry's `prevHash` is the previous entry's `hash`; a reset starts a fresh chain.
 
-### 🛠 `GET /api/audit/verify` (Oct 14)
+### ✅ `GET /api/audit/verify`
 ```json
-{ "valid": true, "entries": 312, "brokenAt": null }
+{
+  "valid": true,
+  "entries": 3,
+  "brokenAt": null
+}
 ```
+If any entry was changed or removed: `{ "valid": false, "entries": 42, "brokenAt": 17 }` (the first broken entry).
 
 ### 🛠 `GET /api/anchors` (Oct 17, stretch)
 ```json
@@ -599,7 +687,7 @@ Show `warnings` prominently (red banner). This is the injection demo.
 | Chat | `POST chat` (SSE) |
 | Approvals | `approvals`, `POST /actions/:id/decision`, `timeline` (SSE); show `wishImpact` on each card |
 | Action timeline | `actions`, `timeline` (SSE), `POST agent/run` (payday button) |
-| Rules (mandate) editor | `mandate`, `mandate/compile`, `mandate/sign` |
+| Rules (mandate) editor | `mandate`, `mandate/compile`, `mandate/sign`; optional "try an action" box using `policy/check` |
 | Bill upload | `POST documents` |
 | Audit log | `audit`, `audit/verify`, `anchors` |
 | Header | `killswitch` (GET + POST) |
@@ -607,6 +695,7 @@ Show `warnings` prominently (red banner). This is the injection demo.
 ---
 
 ## Changelog
+- **v3.3 (Oct 14):** policy engine and audit log are **live**: `GET mandate`, new `POST policy/check` (dry run), `GET /api/audit`, `GET /api/audit/verify`. Audit entries gained `personaId` and `payload`. Mandate summary amounts are written like `$200` (no `.00`).
 - **v3.2 (Oct 14):** wishes are **live** (list, preview, create, detail, patch, delete, impact; examples are real output). Wish ids are `wish_<persona>_<n>`; `Wish` gained `paused`; `plan.nextContributionDate` can be `null`. Only `contribute` is still pending (needs the policy engine).
 - **v3.1 (Oct 13):** budget, forecast, subscriptions, bills and pay-cycle are **live** (examples are real output). `payday` is now a display label (`"Fridays"`); subscriptions gained `accountId`, `lastCharged`, `nextCharge`; bills gained `accountId`; `avgSurplusPerCycleCents` now means left over after *all* normal spending.
 - **v3 (Oct 13):** demo auth: `/api/auth/*`, session cookie, `401`/`403` on persona-scoped routes, `pin` on approve / sign / agent-on, `x-admin-key` on reset, `actor` on audit entries. Takes effect **Oct 15**; until then everything stays open.
