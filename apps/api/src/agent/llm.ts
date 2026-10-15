@@ -53,7 +53,8 @@ async function askOpenRouter(model: string, messages: ModelMessage[], tools: Too
       temperature: 0.2, // low = steadier answers about money
       max_tokens: 800,
       // Only use providers that promise not to store or train on our prompts
-      provider: { data_collection: "deny" },
+      // (unless the development switch allows it, for free models)
+      provider: { data_collection: config.llm.allowProviderTraining ? "allow" : "deny" },
     }),
     signal: AbortSignal.timeout(45_000), // never hang the chat forever
   });

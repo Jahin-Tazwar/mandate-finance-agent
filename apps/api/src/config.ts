@@ -62,5 +62,11 @@ export const config = {
     apiKey: process.env.VITEST ? null : process.env.OPENROUTER_API_KEY || null,
     model: process.env.LLM_MODEL || null,
     fallbackModel: process.env.LLM_FALLBACK_MODEL || null,
+    /**
+     * DEVELOPMENT ONLY: true lets providers that may store or train on prompts answer,
+     * which is what most free models need. Off by default, and keep it off on Render
+     * and for the demo: the privacy promise is "providers that don't keep our data".
+     */
+    allowProviderTraining: process.env.LLM_ALLOW_PROVIDER_TRAINING === "true",
   },
 };

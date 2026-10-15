@@ -16,6 +16,12 @@ try {
   process.exit(1);
 }
 
+// Loud reminders for development-only switches, so they're never left on by accident
+if (config.authDisabled) console.warn("WARNING: AUTH_DISABLED=true: requests without a session are let through.");
+if (config.llm.allowProviderTraining) {
+  console.warn("WARNING: LLM_ALLOW_PROVIDER_TRAINING=true: AI providers may keep prompts. Development only.");
+}
+
 // Data is loaded: start answering requests
 createApp().listen(config.port, () => {
   console.log(`Mandate API listening on http://localhost:${config.port}`);
