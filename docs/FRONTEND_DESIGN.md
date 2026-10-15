@@ -387,6 +387,7 @@ Current rules: version 3 - signed Oct 15, 09:12
 - **Signed-in persona** comes from `GET /auth/me` and lives in a top-level context (the session itself is an `HttpOnly` cookie the browser handles; the frontend never sees or stores it).
 - **On any `401`** (e.g. session expired after 8 hours): go to Sign-in. **On `403`** without `attemptsLeft`: "That isn't your account" (shouldn't happen in normal use).
 - **Errors:** the API always returns `{ error }` on failure; show it in the screen's error state.
+- **Wish endpoints not deployed yet:** the web app tries the documented wishes endpoints first. Only when they return `404`, it uses the seed wishes and stores create/edit changes in browser `localStorage`, separated by persona. The Wishes, new-wish, detail and edit views are frontend routes; device-only wishes do not move money or trigger an action. Other API errors remain visible instead of silently switching to local data.
 
 ---
 
