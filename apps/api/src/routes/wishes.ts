@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { WishInput, WishPatch } from "@mandate/shared";
 import { appendAudit } from "../audit";
+import { assertOwner } from "../auth";
 import { config } from "../config";
 import { usd } from "../lib/money";
 import { addWish, deleteWish, getPersona, getWish, updateWish } from "../store";
@@ -12,6 +13,12 @@ export const wishRoutes = Router();
 // Routes with :personaId: check the persona first so unknown ids get a 404
 wishRoutes.param("personaId", (_req, _res, next, personaId: string) => {
   getPersona(personaId); // Reject: unknown persona → throws → 404
+  next();
+});
+
+// Routes with :wishId: the wish must exist (404) and be the signed-in persona's (403)
+wishRoutes.param("wishId", (_req, res, next, wishId: string) => {
+  assertOwner(res, getWish(wishId).personaId);
   next();
 });
 

@@ -2,6 +2,7 @@ import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Mandate, type Policy, type ProposedAction } from "@mandate/shared";
 import { createApp } from "../src/app";
+import { signedIn } from "./helpers";
 import { type PolicyContext, evaluate } from "../src/policy/engine";
 import { summarize } from "../src/policy/mandate";
 import { initStore } from "../src/store";
@@ -151,7 +152,7 @@ describe("mandate", () => {
   });
 
   it("GET /api/personas/maya/mandate matches the contract", async () => {
-    const res = await request(app).get("/api/personas/maya/mandate").expect(200);
+    const res = await signedIn(app, "maya").get("/api/personas/maya/mandate").expect(200);
     expect(Mandate.parse(res.body).version).toBe(1);
   });
 });
@@ -160,39 +161,39 @@ describe("POST /api/personas/:id/policy/check (dry run)", () => {
   const app = createApp();
 
   it("decides without moving money, and logs it", async () => {
-    const before = await request(app).get("/api/personas/daniel/accounts");
-    const res = await request(app)
+    const before = await signedIn(app, "daniel").get("/api/personas/daniel/accounts");
+    const res = await signedIn(app, "daniel")
       .post("/api/personas/daniel/policy/check")
       .send({ source: "untrusted", type: "payment", fromAccount: "checking", payee: "Account 99-1234", amountCents: 50_000 })
       .expect(200);
     expect(res.body.decision).toBe("deny");
 
-    const after = await request(app).get("/api/personas/daniel/accounts");
+    const after = await signedIn(app, "daniel").get("/api/personas/daniel/accounts");
     expect(after.body).toEqual(before.body); // nothing moved
 
-    const audit = await request(app).get("/api/audit?personaId=daniel&limit=1");
+    const audit = await signedIn(app, "daniel").get("/api/audit?personaId=daniel&limit=1");
     expect(audit.body[0]).toMatchObject({ eventType: "policy_check", actor: { type: "agent" } });
     expect(audit.body[0].summary).toMatch(/^Blocked payment of \$500 to Account 99-1234/);
   });
 
   it("400 for a malformed action, 404 for an unknown wish, 403 for someone else's wish", async () => {
-    await request(app).post("/api/personas/maya/policy/check").send({ type: "payment", amountCents: -1 }).expect(400);
+    await signedIn(app, "maya").post("/api/personas/maya/policy/check").send({ type: "payment", amountCents: -1 }).expect(400);
     const save = { source: "agent", type: "wish_contribution", amountCents: 1_000 };
-    await request(app).post("/api/personas/maya/policy/check").send({ ...save, wishId: "wish_nope_1" }).expect(404);
-    await request(app).post("/api/personas/maya/policy/check").send({ ...save, wishId: "wish_daniel_1" }).expect(403);
+    await signedIn(app, "maya").post("/api/personas/maya/policy/check").send({ ...save, wishId: "wish_nope_1" }).expect(404);
+    await signedIn(app, "maya").post("/api/personas/maya/policy/check").send({ ...save, wishId: "wish_daniel_1" }).expect(403);
   });
 
   it("dry run of an ALLOWED payment still moves nothing", async () => {
-    const before = await request(app).get("/api/personas/daniel/accounts");
+    const before = await signedIn(app, "daniel").get("/api/personas/daniel/accounts");
 
-    const res = await request(app)
+    const res = await signedIn(app, "daniel")
       .post("/api/personas/daniel/policy/check")
       .send({source: "agent", type: "payment", fromAccount: "checking", payee: "Mobi Telecom", amountCents: 5_500})
       .expect(200);
 
     expect(res.body.decision).toBe("allow");
 
-    const after = await request(app).get("/api/personas/daniel/accounts");
+    const after = await signedIn(app, "daniel").get("/api/personas/daniel/accounts");
     expect(after.body).toEqual(before.body);
   });
 });

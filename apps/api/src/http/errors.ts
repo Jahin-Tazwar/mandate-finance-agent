@@ -5,6 +5,8 @@ export class HttpError extends Error {
   constructor(
     public readonly status: number,
     message: string,
+    /** Extra fields for the JSON body, e.g. { attemptsLeft: 3 } after a wrong PIN. */
+    public readonly extra: Record<string, unknown> = {},
   ) {
     super(message);
   }

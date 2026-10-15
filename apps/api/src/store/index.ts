@@ -1,8 +1,8 @@
-import type { Account, AccountType, Category, Mandate, Persona, Transaction, TransactionPage } from "@mandate/shared";
+import type { Account, AccountType, Action, Category, Mandate, Persona, Transaction, TransactionPage } from "@mandate/shared";
 import { appendAudit, resetAudit } from "../audit";
 import { config } from "../config";
 import { notFound } from "../http/errors";
-import { loadSeed, type StoreState, type StoredWish } from "./seed";
+import { type ChatTurn, type StoreState, type StoredContribution, type StoredWish, accountId, loadSeed } from "./seed";
 
 /**
  * The in-memory store: the ONLY module that reads or changes data.
@@ -186,4 +186,122 @@ export function getMandate(personaId: string): Mandate {
 export function isAgentEnabled(personaId: string): boolean {
   getPersona(personaId);
   return current().agentEnabled.get(personaId)!;
+}
+
+/** Turns the agent on (true) or off (false, the kill switch). */
+export function setAgentEnabled(personaId: string, enabled: boolean): void {
+  getPersona(personaId);
+  current().agentEnabled.set(personaId, enabled);
+}
+
+// ---- Ids for things created while the app runs ----
+
+/** The next id with this prefix, e.g. nextId("act") → "act_1", then "act_2"... (a reset starts again at 1) */
+export function nextId(prefix: string): string {
+  const n = (current().counters.get(prefix) ?? 0) + 1;
+  current().counters.set(prefix, n);
+  return `${prefix}_${n}`;
+}
+
+// ---- Moving money (only the executor calls these) ----
+
+/** What a new transaction needs; the date is always the app's "today". */
+export interface NewTransaction {
+  account: AccountType;
+  /** Negative = money out, e.g. −13280 for a $132.80 bill. */
+  amountCents: number;
+  merchant: string;
+  description: string;
+  category: Category;
+  memo?: string;
+}
+
+/**
+ * Records a transaction and changes the account balance to match.
+ * Analytics are computed fresh from the transactions, so every screen sees it at once.
+ */
+export function postTransaction(personaId: string, tx: NewTransaction): Transaction {
+  getPersona(personaId);
+  const account = current().accounts.get(accountId(personaId, tx.account))!;
+  account.balanceCents += tx.amountCents;
+
+  const transaction: Transaction = {
+    id: nextId(`tx_${personaId}_new`),
+    accountId: account.id,
+    date: config.today,
+    description: tx.description,
+    merchant: tx.merchant,
+    amountCents: tx.amountCents,
+    category: tx.category,
+    memo: tx.memo ?? "",
+  };
+  current().transactions.get(personaId)!.unshift(transaction); // newest first
+  return transaction;
+}
+
+/** Adds money to a wish and records it in the wish's saving history. */
+export function addContribution(wishId: string, c: Omit<StoredContribution, "id" | "wishId" | "date">): StoredContribution {
+  const wish = getWish(wishId); // 404 if it doesn't exist
+  wish.savedCents += c.amountCents;
+
+  const contribution: StoredContribution = { ...c, id: nextId("wc"), wishId, date: config.today };
+  const list = current().contributions.get(wishId) ?? [];
+  list.push(contribution);
+  current().contributions.set(wishId, list);
+  return contribution;
+}
+
+/** A wish's saving history, oldest first. */
+export function listContributions(wishId: string): readonly StoredContribution[] {
+  return current().contributions.get(wishId) ?? [];
+}
+
+/** Remembers that a subscription was cancelled through the app. */
+export function markCancelled(personaId: string, merchant: string): void {
+  current().cancelled.get(personaId)!.add(merchant);
+}
+
+/** Subscriptions cancelled through the app (merchant names). */
+export function cancelledSubscriptions(personaId: string): ReadonlySet<string> {
+  getPersona(personaId);
+  return current().cancelled.get(personaId)!;
+}
+
+// ---- Actions ----
+
+/** Stores a new action. */
+export function addAction(action: Action): Action {
+  current().actions.get(action.personaId)!.push(action);
+  return action;
+}
+
+/** One action by id, from any persona (the caller checks it's theirs). */
+export function getAction(actionId: string): Action {
+  for (const list of current().actions.values()) {
+    const action = list.find((a) => a.id === actionId);
+    if (action) return action;
+  }
+  // Reject: no such action → 404
+  throw notFound(`Action "${actionId}"`);
+}
+
+/** A persona's actions, newest first. */
+export function listActions(personaId: string): Action[] {
+  getPersona(personaId);
+  return [...current().actions.get(personaId)!].reverse();
+}
+
+/** Changes some fields of an action (status, decidedAt...) and returns it. */
+export function updateAction(actionId: string, changes: Partial<Action>): Action {
+  const action = getAction(actionId);
+  Object.assign(action, changes);
+  return action;
+}
+
+// ---- Chat history (kept short: the model only needs recent context) ----
+
+/** The persona's chat so far. The agent module adds to it. */
+export function chatHistory(personaId: string): ChatTurn[] {
+  getPersona(personaId);
+  return current().chats.get(personaId)!;
 }

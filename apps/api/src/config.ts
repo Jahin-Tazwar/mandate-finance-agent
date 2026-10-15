@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import path from "node:path";
 
 // Repo root, three folders up from apps/api/src
@@ -5,10 +6,14 @@ export const rootDir = path.resolve(import.meta.dirname, "../../..");
 
 // Node can read .env files by itself (no `dotenv` package needed).
 // A missing .env is fine during early development: the defaults below apply.
-try {
-  process.loadEnvFile(path.join(rootDir, ".env"));
-} catch {
-  // no .env yet
+// Skipped while tests run: tests must give the same result on every machine,
+// whatever keys someone has in their own .env (e.g. ADMIN_KEY).
+if (!process.env.VITEST) {
+  try {
+    process.loadEnvFile(path.join(rootDir, ".env"));
+  } catch {
+    // no .env yet
+  }
 }
 
 export const config = {
@@ -33,4 +38,29 @@ export const config = {
    * Off while tests run, so tests behave the same whether or not you've built it.
    */
   webDistDir: process.env.VITEST ? null : path.resolve(rootDir, process.env.WEB_DIST_DIR ?? "apps/web/dist"),
+
+  /**
+   * Signs the session cookies. Missing → a random one per run: everyone is signed
+   * out when the server restarts, which is fine because the demo data resets too.
+   */
+  sessionSecret: process.env.SESSION_SECRET || randomBytes(32).toString("hex"),
+  /**
+   * TEMPORARY, for the few days until the frontend has its sign-in screen:
+   * AUTH_DISABLED=true lets requests without a session through. Never on in tests.
+   */
+  authDisabled: process.env.AUTH_DISABLED === "true" && !process.env.VITEST,
+  /** POST /api/admin/reset needs this key in the `x-admin-key` header when it's set. Read live (tests change it). */
+  get adminKey(): string | null {
+    return process.env.ADMIN_KEY || null;
+  },
+
+  /**
+   * The AI model, through OpenRouter. No key = chat answers "AI isn't set up".
+   * Never used while tests run (they use a scripted fake model, and must not cost money).
+   */
+  llm: {
+    apiKey: process.env.VITEST ? null : process.env.OPENROUTER_API_KEY || null,
+    model: process.env.LLM_MODEL || null,
+    fallbackModel: process.env.LLM_FALLBACK_MODEL || null,
+  },
 };

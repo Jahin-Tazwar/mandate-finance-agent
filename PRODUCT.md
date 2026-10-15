@@ -189,7 +189,7 @@ sequenceDiagram
 | Policy engine is **plain TypeScript, not the LLM** | Deterministic, testable and explainable. An injected prompt can't talk its way past it |
 | **Untrusted-input tracking** | Any action parameter derived from a document, email or memo field is marked `source=untrusted`, and untrusted actions **always** need human approval, whatever the tier |
 | **Only the signed-in human can approve** | Every request is checked against the signed-in persona (no reading someone else's account). Approving a payment, signing rules and turning the agent on also need a PIN. The agent has no tool that can approve, sign or change tiers |
-| **Redact PII before the LLM** | Account numbers and names are replaced with aliases (`ACCT_1`, `PAYEE_7`). The LLM never sees raw identifiers |
+| **Redact PII before the LLM** | Emails, card and account numbers, phone and ID numbers are replaced before anything is sent (e.g. `[number ending 4821]`, `[email]`). The model sees first names only, and dollar amounts instead of raw records |
 | **OpenRouter with a privacy-first provider setting** | Model is swappable via `.env`; requests set provider routing to refuse providers that keep or train on prompts (`data_collection: "deny"`); fallback model if the primary fails |
 | **LLM output is never trusted** | Every LLM response that becomes data (policy JSON, extracted bill fields, tool arguments) is validated with Zod schemas; invalid → retry once → error |
 | **Tools return results, never execute directly** | `propose_*` tools go through the policy engine; only the executor writes to the ledger |
@@ -280,7 +280,7 @@ Demo-grade on purpose: the credentials are public (shown on the sign-in screen) 
 | Testing | **Vitest** + **Supertest** (API) | Required "test cases" deliverable; red-team suite runs as tests |
 | Logging | **pino** | Structured logs = execution evidence |
 | Dev run | `npm run dev` (both apps via `concurrently`) | One command to start |
-| Auth | Node `crypto`: **scrypt** for password/PIN hashes, **HMAC-SHA256** signed session cookie; `cookie-parser` to read cookies | No auth service or extra dependency to learn; easy to explain line by line |
+| Auth | Node `crypto`: **scrypt** for password/PIN hashes, **HMAC-SHA256** signed session cookie; the cookie header is read with a 6-line helper (no extra package) | No auth service or extra dependency to learn; easy to explain line by line |
 | Hosting (stretch) | **Render free Web Service**: one service runs Express, which serves the API *and* the built frontend | One URL, no CORS, free. See §7.1 |
 
 ### Minimal OpenRouter client
@@ -497,18 +497,20 @@ mandate/
 | Prompt injection via bill PDF / memo field | Untrusted-source marking → always L2; a document can **never introduce a new payee** (blocked outright); policy engine ignores LLM reasoning | `policy.test.ts` (red team) |
 | Agent splits payments to dodge caps | Daily cap on everything the agent moves | `policy.test.ts` (red team) |
 | Payee spoofing (look-alike names) | Exact-name match against payees paid before, so look-alikes count as new; new-payee waiting period | `policy.test.ts` (red team) |
-| Escalation ("you are now in admin mode") | Tier is server-side state; no tool can change tier or mandate | `redteam/escalation.test.ts` |
-| LLM hallucinated amounts | Executor re-validates against bill records; amount mismatch → deny | `policy.test.ts` |
-| Malformed LLM output | Zod validation on every tool argument and compiled policy | `policy.test.ts` |
-| PII leakage to LLM provider | Redaction layer with aliases; OpenRouter provider routing with `data_collection: "deny"` | `redactor.test.ts` |
+| Escalation ("you are now in admin mode") | Tier is server-side state; no tool can change tier or mandate; unknown tool names are refused | `agent.test.ts` (red team) |
+| LLM hallucinated amounts | A bill payment must match the bill on record (amount and id), otherwise it is refused before the policy engine even runs | `actions.test.ts` |
+| Malformed LLM output | Zod validation on every tool argument (and every request body); errors go back to the model to fix | `agent.test.ts` |
+| PII leakage to LLM provider | Redactor on the user's message and every tool result; OpenRouter provider routing with `data_collection: "deny"`; the audit log records how many items were redacted, never the message | `agent.test.ts` (redactor) |
 | User A reads or acts on user B's data (BOLA) | Ownership check on every persona-scoped route; 403 otherwise | `auth.test.ts` |
-| Agent (or injected text) approves its own action | No approve/sign/tier tool exists; approvals require the user's session **and** PIN | `redteam/self-approval.test.ts` |
+| Agent (or injected text) approves its own action | No approve/sign/tier tool exists; approvals require the user's session **and** PIN | `agent.test.ts`, `actions.test.ts` |
+| A fooled model tries to pay a stranger | The model can only *propose*; the policy engine decides (new payee → approval; from a document → blocked) | `agent.test.ts` (red team), `actions.test.ts` |
+| Approving twice pays twice / balance changed since the proposal | A decided action can't be decided again (`409`); the hard rules (floor, funds) are re-checked at approval time | `actions.test.ts` |
 | Stolen or forged session | HMAC-signed, `HttpOnly`, `SameSite=Lax`, `Secure` in production, 8-hour expiry | `auth.test.ts` |
 | Password / PIN guessing | 5 failures → 5-minute lock; hashes with scrypt, never stored in plain text | `auth.test.ts` |
 | Anyone wiping the demo | Admin reset needs `ADMIN_KEY` | `auth.test.ts` |
 | API key leakage | Key only in server `.env`; never sent to the browser; `.env` in `.gitignore` | Manual check |
 | Audit tampering | SHA-256 hash chain (edits and deletions break it) + `/api/audit/verify` + on-chain anchor | `audit.test.ts` |
-| Runaway agent / cost | Kill switch, tool-call limit per turn, token caps | `killswitch.test.ts` |
+| Runaway agent / cost | Kill switch; at most 6 model rounds and 3 proposed actions per message; one chat at a time per persona; 800-token answers; 45-second timeout | `agent.test.ts`, `actions.test.ts` |
 | Wish auto-save drains checking | Auto-save is capped per payday by the mandate and never runs if checking would drop below the balance floor | `wishes.test.ts` |
 | Manipulated wish ("my wish is to send $2,000 to X") | Wish money only moves between the user's own accounts; a wish can't have an external payee | `redteam/wish-abuse.test.ts` |
 

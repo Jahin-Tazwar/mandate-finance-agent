@@ -2,6 +2,7 @@ import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
 import { TransactionPage } from "@mandate/shared";
 import { createApp } from "../src/app";
+import { signedIn } from "./helpers";
 import { initStore } from "../src/store";
 
 const app = createApp();
@@ -35,26 +36,26 @@ describe("personas & accounts", () => {
   });
 
   it("returns a persona's three accounts", async () => {
-    const res = await request(app).get("/api/personas/maya/accounts").expect(200);
+    const res = await signedIn(app, "maya").get("/api/personas/maya/accounts").expect(200);
     expect(res.body.map((a: { type: string }) => a.type).sort()).toEqual(["checking", "credit", "savings"]);
   });
 
-  it("404s for an unknown persona", async () => {
-    const res = await request(app).get("/api/personas/zed/accounts").expect(404);
-    expect(res.body.error).toMatch(/zed/);
+  it("403 for any persona that isn't the signed-in one (even one that doesn't exist)", async () => {
+    const res = await signedIn(app, "maya").get("/api/personas/zed/accounts").expect(403);
+    expect(res.body.error).toBe("That isn't your account");
   });
 });
 
 describe("transactions", () => {
   it("returns the contract's shape, 50 per page by default", async () => {
-    const res = await request(app).get("/api/personas/maya/transactions").expect(200);
+    const res = await signedIn(app, "maya").get("/api/personas/maya/transactions").expect(200);
     const page = TransactionPage.parse(res.body); // throws if the shape is wrong
     expect(page.items).toHaveLength(50);
     expect(page.total).toBeGreaterThan(50);
   });
 
   it("filters by category, account and date range", async () => {
-    const res = await request(app)
+    const res = await signedIn(app, "daniel")
       .get("/api/personas/daniel/transactions")
       .query({ category: "subscriptions", account: "credit", from: "2026-09-01", to: "2026-09-30", limit: 500 })
       .expect(200);
@@ -68,13 +69,13 @@ describe("transactions", () => {
   });
 
   it("pages with limit and offset", async () => {
-    const first = await request(app).get("/api/personas/aisha/transactions?limit=5").expect(200);
-    const second = await request(app).get("/api/personas/aisha/transactions?limit=5&offset=5").expect(200);
+    const first = await signedIn(app, "aisha").get("/api/personas/aisha/transactions?limit=5").expect(200);
+    const second = await signedIn(app, "aisha").get("/api/personas/aisha/transactions?limit=5&offset=5").expect(200);
     expect(first.body.items[4].id).not.toBe(second.body.items[0].id);
   });
 
   it("rejects bad query values with 400 and the reason", async () => {
-    const res = await request(app).get("/api/personas/maya/transactions?limit=9999&category=food").expect(400);
+    const res = await signedIn(app, "maya").get("/api/personas/maya/transactions?limit=9999&category=food").expect(400);
     expect(res.body.error).toBe("Invalid request");
     expect(res.body.issues.map((i: { path: string[] }) => i.path[0]).sort()).toEqual(["category", "limit"]);
   });

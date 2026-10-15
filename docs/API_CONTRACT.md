@@ -1,4 +1,4 @@
-# Mandate API Contract (v3)
+# Mandate API Contract (v3.4)
 
 The agreement between the backend (Tech Lead) and the frontend (Frontend Developer).
 **The frontend can build every screen today using the example responses below as mock data**, then switch to the real API as each endpoint goes live.
@@ -16,9 +16,9 @@ The agreement between the backend (Tech Lead) and the frontend (Frontend Develop
 | **Money** | Always **integer cents**: `balanceCents: 184050` = **$1,840.50**. Format on the frontend: `(cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" })` |
 | Dates | `"2026-10-12"` (date) or `"2026-10-12T09:15:00.000Z"` (timestamp, UTC) |
 | Persona | Most routes start with `/api/personas/:personaId/...` (`maya`, `daniel`, `aisha`) |
-| **Auth** (from Oct 15) | Sign in with `POST /api/auth/login`; the server sets an `HttpOnly` session cookie that the browser sends automatically (same origin through the proxy; with `fetch`, use `credentials: "include"` if you ever call the API from another origin). **Every** `/api/personas/:personaId/*`, `/api/wishes/*` and `/api/actions/*` route needs it: not signed in → `401`; another persona's data → `403`. Public: `/api/health`, `/api/meta`, `/api/personas`, `/api/auth/*` |
+| **Auth** (✅ live) | Sign in with `POST /api/auth/login`; the server sets an `HttpOnly` session cookie that the browser sends automatically (same origin, so plain `fetch` works; use `credentials: "include"` only if you ever call the API from another origin). **Every** `/api/personas/:personaId/*`, `/api/wishes/*`, `/api/actions/*` and `GET /api/audit` needs it: not signed in → `401`; another persona's data (or a persona that doesn't exist) → `403`. Public: `/api/health`, `/api/meta`, `/api/personas`, `/api/auth/*`, `/api/audit/verify`. Sessions last 8 hours. **Transition:** until the sign-in screen ships, the hosted server may run with `AUTH_DISABLED=true`, which lets requests *without* a session through (signed-in requests are still checked, and PINs are still required). |
 | **PIN** (from Oct 15) | Three risky actions need the persona's 4-digit `pin` in the request body: **approving** an action, **signing** a mandate, turning the agent **on**. Wrong PIN → `403` with `attemptsLeft`; 5 failures → `429` with `retryAfterSeconds` |
-| Errors | Non-2xx responses always return `{ "error": "message", "issues"?: [...], "attemptsLeft"?: n, "retryAfterSeconds"?: n }` |
+| Errors | Non-2xx responses always return `{ "error": "message", "issues"?: [...], "attemptsLeft"?: n, "retryAfterSeconds"?: n }`. Broken JSON → `400 { "error": "Invalid JSON" }`. Deciding an action that's already decided → `409`. |
 | Types | TypeScript types for every shape live in `packages/shared` (`@mandate/shared`) and can be imported directly by the frontend |
 
 ### Shared value lists
@@ -57,22 +57,24 @@ Reloads all demo data from the CSV seed files (also clears sign-in lockouts). Fr
 
 ## Auth (Oct 15)
 
-### 🛠 `GET /api/auth/demo-accounts`
+### ✅ `GET /api/auth/demo-accounts`
 Public list for the sign-in screen. The credentials are fake and intentionally public; showing them lets judges sign in with one click.
 ```json
 [
-  { "personaId": "maya", "name": "Maya Chen", "profile": "International student…", "username": "maya", "password": "maya-demo", "pin": "1111" }
+  { "personaId": "maya", "name": "Maya Chen", "profile": "International student…", "username": "maya", "password": "maya-demo", "pin": "1111" },
+  { "personaId": "daniel", "...": "password daniel-demo, pin 2222" },
+  { "personaId": "aisha", "...": "password aisha-demo, pin 3333" }
 ]
 ```
 
-### 🛠 `POST /api/auth/login`
+### ✅ `POST /api/auth/login`
 Request: `{ "username": "maya", "password": "maya-demo" }` → `200` with the `Persona` and a `Set-Cookie` header.
-Wrong credentials → `401 { "error": "Wrong username or password", "attemptsLeft": 4 }`. Locked → `429 { "error": "Too many attempts", "retryAfterSeconds": 300 }`.
+Wrong credentials → `401 { "error": "Wrong username or password", "attemptsLeft": 4 }` (an unknown username gets the same message). The 5th wrong try locks that username for 5 minutes → `429 { "error": "Too many attempts", "retryAfterSeconds": 300 }`. Sign-ins and failed sign-ins are recorded in the audit log.
 
-### 🛠 `GET /api/auth/me`
+### ✅ `GET /api/auth/me`
 → `{ "persona": Persona }` when signed in, `401` otherwise. Call it on app start to decide between the sign-in screen and the app.
 
-### 🛠 `POST /api/auth/logout`
+### ✅ `POST /api/auth/logout`
 → `204`, clears the cookie. "Switch demo account" = logout + login as another persona.
 
 ---
@@ -419,7 +421,7 @@ The `Wish`, its saving history, and a projection for a chart (one point per payd
   ]
 }
 ```
-`contributions` stays empty until auto-save runs (from Oct 16–17); each item will look like `{ "id": "wc_1", "date": "2026-10-16", "amountCents": 4039, "source": "agent", "actionId": "act_77aa" }`.
+`contributions` lists every top-up and auto-save, oldest first, e.g. `{ "id": "wc_1", "date": "2026-10-12", "amountCents": 4039, "source": "agent", "actionId": "act_3" }`.
 
 ### ✅ `PATCH /api/wishes/:wishId`
 Any of: `title`, `targetCents`, `targetDate`, `priority`, `autoSave`, `paused` → the updated `Wish` with a recalculated plan. Unknown fields → `400`. Pausing a wish frees its money for the wishes below it.
@@ -427,8 +429,11 @@ Any of: `title`, `targetCents`, `targetDate`, `priority`, `autoSave`, `paused` �
 ### ✅ `DELETE /api/wishes/:wishId`
 Removes the wish → `204`. Money already saved stays in savings.
 
-### 🛠 `POST /api/wishes/:wishId/contribute` (Oct 15–16)
-Manual top-up from checking to savings. Request: `{ "amountCents": 2000 }` → returns an `Action` (it goes through the policy engine like everything else, so it can be `executed`, `pending_approval` or `denied`).
+### ✅ `POST /api/wishes/:wishId/contribute`
+Manual top-up from checking to savings. Request: `{ "amountCents": 2000 }` → `201` with an `Action`. It goes through the policy engine like everything else: the user's own top-up is `executed`, unless it would break the $200 floor or there isn't enough money (then `denied`). The wish's `savedCents` goes up and the top-up appears in `GET /wishes/:id` → `contributions`:
+```json
+[{ "id": "wc_1", "date": "2026-10-12", "amountCents": 2000, "source": "user", "actionId": "act_1" }]
+```
 
 ### ✅ `GET /api/personas/:personaId/wishes/impact?amountCents=6000`
 "What does this purchase do to my wishes?" Money spent is money not saved, so the top wish that's currently receiving money arrives later. Real example (Maya):
@@ -451,7 +456,7 @@ Also included automatically in payment `Action`s as `wishImpact` (same shape as 
 
 ## Agent & actions
 
-### 🛠 `POST /api/personas/:personaId/chat` (Oct 15): **Server-Sent Events stream**
+### ✅ `POST /api/personas/:personaId/chat`: **Server-Sent Events stream**
 Request: `{ "message": "Can I afford a $60 concert ticket this week?" }`
 The response is a stream of events (read with `fetch` + a stream reader):
 ```
@@ -461,36 +466,48 @@ event: action    data: { ...Action (see below) }
 event: done      data: {}
 event: error     data: {"error":"..."}
 ```
-`text` arrives in small pieces; append each `delta` to the chat bubble.
+`tool` arrives twice per tool (`"status":"running"`, then `"done"`): show "Checking your bills…" while it runs. Append each `text` `delta` to the chat bubble (today the whole answer arrives as one delta; word-by-word streaming comes Oct 16 in the same format). Every chat ends with `done`. Problems arrive as an `error` event (e.g. the AI isn't configured, or the model is down), never as a broken stream. Before the stream starts: empty message → `400`; a reply still running for this persona → `429`.
+
+What the agent can do: look things up (balances, bills, subscriptions, budget, forecast, rules, wishes, transactions, wish impact) and **propose** payments, transfers, wish savings, cancellations and disputes. It has no way to move money itself: every proposal becomes an `Action` decided by the policy engine, and is sent as an `action` event. At most 3 actions per message. Personal data (emails, card/account numbers, phone and ID numbers) is redacted before anything reaches the model.
 
 ### The `Action` object (used by chat, approvals and the timeline)
+Real example (Daniel's agent proposes the power bill):
 ```json
 {
-  "id": "act_31c9",
+  "id": "act_1",
   "personaId": "daniel",
   "type": "payment",
-  "summary": "Pay CityPower $180.00 (power bill due Oct 16)",
-  "params": { "payeeId": "payee_citypower", "amountCents": 18000, "fromAccount": "checking" },
+  "summary": "Pay CityPower $132.80",
+  "params": { "fromAccount": "checking", "payee": "CityPower", "amountCents": 13280 },
   "source": "agent",
   "tier": "L2",
   "decision": "require_approval",
   "status": "pending_approval",
-  "reasons": ["Amount is over your $100 approval limit."],
-  "agentRationale": "The bill is due in 4 days and checking can cover it.",
-  "wishImpact": [{ "wishId": "wish_daniel_1", "title": "Car down payment", "delayDays": 7 }],
-  "createdAt": "2026-10-12T09:15:00.000Z"
+  "reasons": ["$132.80 is over your $100 limit per payment."],
+  "agentRationale": "The power bill is due Oct 15 and checking can cover it.",
+  "createdAt": "2026-10-15T16:48:08.998Z",
+  "decidedAt": null,
+  "approvedBy": null,
+  "executedAt": null,
+  "wishImpact": [{ "wishId": "wish_daniel_1", "title": "Car down payment", "delayDays": 15 }]
 }
 ```
-`type`: `payment` · `transfer` · `cancel_subscription` · `dispute` · `wish_contribution`
-`wishImpact` is present on payments (empty array if no wishes are affected). For `wish_contribution`, `params` includes `wishId`.
+- `type`: `payment` · `transfer` · `cancel_subscription` · `dispute` · `wish_contribution`
+- `status`: `executed` (done) · `pending_approval` (waiting for the user) · `denied` (blocked by the rules) · `rejected` (the user said no)
+- `params` by type: payment `{ fromAccount, payee, amountCents, billId? }` · transfer `{ fromAccount, toAccount, amountCents }` · wish_contribution `{ wishId, amountCents }` · cancel_subscription `{ subscriptionId, merchant }` · dispute `{ transactionId }`
+- `reasons[0]` is the deciding reason: show it on the card. `agentRationale` is `null` for the user's own actions. `wishImpact` is present on payments only (empty array if no wish is affected).
 
-### 🛠 `GET /api/personas/:personaId/approvals` (Oct 15)
+### ✅ `GET /api/personas/:personaId/approvals`
 Returns `Action[]` with `status: "pending_approval"`.
 
-### 🛠 `POST /api/actions/:actionId/decision` (Oct 15)
-Request: `{ "decision": "approve", "pin": "1111" }` or `{ "decision": "reject" }` (rejecting never needs a PIN) → returns the updated `Action`. Approved actions record who approved them (`approvedBy`, `approvedAt`).
+### ✅ `POST /api/actions/:actionId/decision`
+Request: `{ "decision": "approve", "pin": "2222" }` or `{ "decision": "reject" }` (rejecting never needs a PIN) → `200` with the updated `Action`.
+- Approved → `"status": "executed"` with `approvedBy`, `decidedAt` and `executedAt` set.
+- The rules are checked **again** when approving (the balance may have changed). If it would now break the floor, or there isn't enough money → `"status": "denied"` and `reasons[0]` starts with `"Can't do this any more: …"`. Show that reason.
+- Wrong PIN → `403 { "error": "Wrong PIN", "attemptsLeft": 4 }`; the 5th wrong PIN → `429 { "retryAfterSeconds": 300 }`.
+- Already decided → `409`. Someone else's action → `403`. Unknown id → `404`.
 
-### 🛠 `GET /api/personas/:personaId/actions` (Oct 15)
+### ✅ `GET /api/personas/:personaId/actions`
 All actions, newest first (`?limit=50`). For the action timeline's history.
 
 ### 🛠 `GET /api/personas/:personaId/timeline` (Oct 16): **SSE stream**
@@ -621,7 +638,7 @@ Show `warnings` prominently (red banner). This is the injection demo.
 ## Audit & on-chain
 
 ### ✅ `GET /api/audit`
-Newest first. Optional `?personaId=daniel&limit=100` (max 1000). Real example (the blocked attack above):
+Needs a session: you see **only your own persona's entries**, newest first. Optional `?limit=100` (max 1000); `?personaId=` for someone else → `403`. Real example (the blocked attack above):
 ```json
 [
   {
@@ -653,7 +670,7 @@ Newest first. Optional `?personaId=daniel&limit=100` (max 1000). Real example (t
   }
 ]
 ```
-`eventType` so far: `seed_loaded`, `policy_check`, `wish_created`, `wish_updated`, `wish_deleted` (more from Oct 15: actions, approvals, sign-ins). `actor.type`: `user` · `agent` · `system`. Each entry's `prevHash` is the previous entry's `hash`; a reset starts a fresh chain.
+`eventType`: `seed_loaded`, `signed_in`, `sign_in_failed`, `policy_check`, `wish_created`, `wish_updated`, `wish_deleted`, `action_executed`, `action_pending_approval`, `action_denied`, `action_approved`, `action_rejected`, `agent_chat` (one per chat message: tools used, actions proposed, how many items of personal data were redacted; never the message text). `actor.type`: `user` · `agent` · `system`. Each entry's `prevHash` is the previous entry's `hash`; a reset starts a fresh chain.
 
 ### ✅ `GET /api/audit/verify`
 ```json
@@ -695,6 +712,7 @@ If any entry was changed or removed: `{ "valid": false, "entries": 42, "brokenAt
 ---
 
 ## Changelog
+- **v3.4 (Oct 15):** **sign-in is live** (`auth/*`, session cookie, `401`/`403`, PIN with lockout, `x-admin-key` on reset when set). **Actions are live**: chat (SSE), approvals, decision, actions history, wish top-up (`contribute`), contributions in wish detail. `Action.params` uses `payee` (a name), not `payeeId`; `Action` gained `decidedAt`, `approvedBy`, `executedAt`; `agentRationale` can be `null`. `GET /api/audit` is now scoped to the signed-in persona. Unknown personas in URLs give `403` (not `404`) when signed in. Temporary `AUTH_DISABLED` switch for the hosted server until the sign-in screen ships.
 - **v3.3 (Oct 14):** policy engine and audit log are **live**: `GET mandate`, new `POST policy/check` (dry run), `GET /api/audit`, `GET /api/audit/verify`. Audit entries gained `personaId` and `payload`. Mandate summary amounts are written like `$200` (no `.00`).
 - **v3.2 (Oct 14):** wishes are **live** (list, preview, create, detail, patch, delete, impact; examples are real output). Wish ids are `wish_<persona>_<n>`; `Wish` gained `paused`; `plan.nextContributionDate` can be `null`. Only `contribute` is still pending (needs the policy engine).
 - **v3.1 (Oct 13):** budget, forecast, subscriptions, bills and pay-cycle are **live** (examples are real output). `payday` is now a display label (`"Fridays"`); subscriptions gained `accountId`, `lastCharged`, `nextCharge`; bills gained `accountId`; `avgSurplusPerCycleCents` now means left over after *all* normal spending.

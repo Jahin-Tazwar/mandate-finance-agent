@@ -4,6 +4,7 @@ import { Bill, Budget, Forecast, PayCycle, Subscription, type Transaction } from
 import { getBills, getBudget, getForecast, getPayCycle, getSubscriptions } from "../src/analytics";
 import { classifyCadence, detectSeries, upcomingDates } from "../src/analytics/recurring";
 import { createApp } from "../src/app";
+import { signedIn } from "./helpers";
 import { config } from "../src/config";
 import { addDays, addMonths } from "../src/lib/dates";
 import { initStore } from "../src/store";
@@ -124,17 +125,17 @@ describe("analytics API", () => {
     ["forecast", Forecast],
     ["budget", Budget],
   ] as const)("GET /api/personas/daniel/%s matches the contract", async (path, schema) => {
-    const res = await request(app).get(`/api/personas/daniel/${path}`).expect(200);
+    const res = await signedIn(app, "daniel").get(`/api/personas/daniel/${path}`).expect(200);
     expect(() => schema.parse(res.body)).not.toThrow();
   });
 
   it("budget for an earlier month", async () => {
-    const res = await request(app).get("/api/personas/maya/budget?month=2026-09").expect(200);
+    const res = await signedIn(app, "maya").get("/api/personas/maya/budget?month=2026-09").expect(200);
     expect(res.body.month).toBe("2026-09");
   });
 
-  it("400 for a bad month, 404 for an unknown persona", async () => {
-    await request(app).get("/api/personas/maya/budget?month=2026-13").expect(400);
-    await request(app).get("/api/personas/zed/forecast").expect(404);
+  it("400 for a bad month, 403 for a persona that isn't yours", async () => {
+    await signedIn(app, "maya").get("/api/personas/maya/budget?month=2026-13").expect(400);
+    await signedIn(app, "maya").get("/api/personas/zed/forecast").expect(403); // not maya's
   });
 });

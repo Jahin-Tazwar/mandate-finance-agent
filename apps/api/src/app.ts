@@ -2,9 +2,13 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import express, { type ErrorRequestHandler, type Express } from "express";
 import { ZodError } from "zod";
+import { requireOwnPersona, requireSession } from "./auth";
 import { config } from "./config";
 import { HttpError } from "./http/errors";
+import { actionRoutes } from "./routes/actions";
 import { analyticsRoutes } from "./routes/analytics";
+import { authRoutes } from "./routes/auth";
+import { chatRoutes } from "./routes/chat";
 import { personaRoutes } from "./routes/personas";
 import { policyRoutes } from "./routes/policy";
 import { systemRoutes } from "./routes/system";
@@ -16,14 +20,28 @@ import { wishRoutes } from "./routes/wishes";
  */
 export function createApp() {
   const app = express();
-  app.use(express.json()); // read JSON request bodies into req.body
+  app.use(express.json({ limit: "100kb" })); // read JSON request bodies into req.body (big bodies → 413)
+
+  // Render sits in front of us and handles HTTPS; trust its "this was HTTPS" header,
+  // so req.secure is true there and the session cookie gets the Secure flag
+  app.set("trust proxy", 1);
+
+  // ---- Sign-in gates (before the routes they protect) ----
+  // Everything about one persona needs a session, and it must be THAT persona's session.
+  // (GET /api/personas, the list itself, stays public: the sign-in screen needs it.)
+  app.use("/api/personas/:personaId", requireSession, requireOwnPersona);
+  // Wishes and actions are looked up by their own id; their routes check the owner (403)
+  app.use(["/api/wishes", "/api/actions"], requireSession);
 
   // All routes live under /api
   app.use("/api", systemRoutes);
+  app.use("/api", authRoutes);
   app.use("/api", personaRoutes);
   app.use("/api", analyticsRoutes);
   app.use("/api", wishRoutes);
+  app.use("/api", actionRoutes);
   app.use("/api", policyRoutes);
+  app.use("/api", chatRoutes);
 
   // Unknown /api routes get a clear JSON 404 instead of an HTML page.
   app.use("/api", (_req, res) => {
@@ -41,9 +59,14 @@ export function createApp() {
       res.status(400).json({ error: "Invalid request", issues: err.issues });
       return;
     }
-    // An error that knows its status, e.g. notFound() → 404
+    // An error that knows its status, e.g. notFound() → 404, wrong PIN → 403 + attemptsLeft
     if (err instanceof HttpError) {
-      res.status(err.status).json({ error: err.message });
+      res.status(err.status).json({ error: err.message, ...err.extra });
+      return;
+    }
+    // Express's own request errors: broken JSON → 400, body too big → 413
+    if (typeof err?.status === "number" && err.expose) {
+      res.status(err.status).json({ error: err.type === "entity.parse.failed" ? "Invalid JSON" : err.message });
       return;
     }
     // Anything else is a bug: log it, and don't leak details to the browser

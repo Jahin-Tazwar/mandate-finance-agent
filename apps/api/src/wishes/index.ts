@@ -3,7 +3,7 @@ import { getPayCycle } from "../analytics";
 import { config } from "../config";
 import { addDays } from "../lib/dates";
 import { usd } from "../lib/money";
-import { allTransactions, getWish, listWishes } from "../store";
+import { allTransactions, getWish, listContributions, listWishes } from "../store";
 import type { StoredWish } from "../store/seed";
 import { type WishFields, perDay, planWish, projectSavings } from "./planner";
 
@@ -121,7 +121,8 @@ export function getWishDetail(wishId: string): WishDetail {
   const payCycle = getPayCycle(wish.personaId);
   return {
     wish,
-    contributions: [], // filled in once auto-save runs (Oct 15–17)
+    // Saving history, e.g. [{ date: "2026-10-12", amountCents: 4039, source: "agent", actionId: "act_3" }]
+    contributions: listContributions(wishId).map(({ wishId: _w, ...c }) => c),
     projection: projectSavings({ ...wish }, paceCents, payCycle),
   };
 }

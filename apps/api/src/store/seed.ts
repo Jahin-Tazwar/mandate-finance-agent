@@ -4,6 +4,7 @@ import {
   Category,
   WishCategory,
   type Account,
+  type Action,
   type Mandate,
   type Persona,
   type Transaction,
@@ -88,6 +89,35 @@ export interface StoreState {
   mandates: Map<string, Mandate>;
   /** false = the kill switch is on (the agent may only watch). */
   agentEnabled: Map<string, boolean>;
+
+  // ---- Created while the app runs (a reset clears them) ----
+
+  /** Each persona's actions (agent and user), oldest first. */
+  actions: Map<string, Action[]>;
+  /** Money put aside for each wish, by wish id, oldest first. */
+  contributions: Map<string, StoredContribution[]>;
+  /** Subscriptions the persona cancelled through the app (merchant names). */
+  cancelled: Map<string, Set<string>>;
+  /** The chat so far, per persona (user and assistant messages only). */
+  chats: Map<string, ChatTurn[]>;
+  /** Counters for new ids, e.g. "act" → 7 means the next action is act_8. */
+  counters: Map<string, number>;
+}
+
+/** One saving for a wish (see WishDetail.contributions in the API contract). */
+export interface StoredContribution {
+  id: string;
+  wishId: string;
+  date: string;
+  amountCents: number;
+  source: "agent" | "user";
+  actionId: string | null;
+}
+
+/** One chat message kept for context. */
+export interface ChatTurn {
+  role: "user" | "assistant";
+  content: string;
 }
 
 // Every persona gets these 3 accounts
@@ -114,6 +144,11 @@ export function loadSeed(seedDir: string): StoreState {
     usage: new Map(),
     mandates: new Map(),
     agentEnabled: new Map(),
+    actions: new Map(),
+    contributions: new Map(),
+    cancelled: new Map(),
+    chats: new Map(),
+    counters: new Map(),
   };
 
   // ---- Personas, their accounts and their transactions ----
@@ -167,6 +202,9 @@ export function loadSeed(seedDir: string): StoreState {
     // Everyone starts with the default rules and the agent switched on
     state.mandates.set(row.id, defaultMandate(row.id, state.loadedAt));
     state.agentEnabled.set(row.id, true);
+    state.actions.set(row.id, []);
+    state.cancelled.set(row.id, new Set());
+    state.chats.set(row.id, []);
   }
 
   // ---- Wishes ----

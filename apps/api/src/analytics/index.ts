@@ -1,7 +1,7 @@
 import type { Bill, Budget, Forecast, PayCycle, Subscription } from "@mandate/shared";
 import { config } from "../config";
 import { monthOf } from "../lib/dates";
-import { allTransactions, getAccount, subscriptionUsage } from "../store";
+import { allTransactions, cancelledSubscriptions, getAccount, subscriptionUsage } from "../store";
 import { buildBudget } from "./budget";
 import { findDuplicateCharges, listBills, listSubscriptions } from "./commitments";
 import { buildForecast, projectChecking, safeToSpendToday } from "./forecast";
@@ -37,7 +37,12 @@ export function getPayCycle(personaId: string): PayCycle {
 
 export function getSubscriptions(personaId: string): Subscription[] {
   const c = context(personaId);
-  return listSubscriptions(personaId, c.series, subscriptionUsage(personaId), c.today);
+  const cancelled = cancelledSubscriptions(personaId);
+
+  // Ones cancelled through the app show as "cancelled" (they'd still look recurring from history)
+  return listSubscriptions(personaId, c.series, subscriptionUsage(personaId), c.today).map((s) =>
+    cancelled.has(s.merchant) ? { ...s, status: "cancelled" as const } : s,
+  );
 }
 
 export function getBills(personaId: string): Bill[] {

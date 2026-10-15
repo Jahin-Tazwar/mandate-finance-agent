@@ -2,6 +2,7 @@ import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
 import { appendAudit, auditEntries, verifyChain } from "../src/audit";
 import { createApp } from "../src/app";
+import { signedIn } from "./helpers";
 import { initStore } from "../src/store";
 
 beforeEach(() => {
@@ -60,9 +61,9 @@ describe("audit API", () => {
   const app = createApp();
 
   it("logs wish changes and verifies", async () => {
-    await request(app).patch("/api/wishes/wish_maya_1").send({ paused: true }).expect(200);
+    await signedIn(app, "maya").patch("/api/wishes/wish_maya_1").send({ paused: true }).expect(200);
 
-    const res = await request(app).get("/api/audit?personaId=maya").expect(200);
+    const res = await signedIn(app, "maya").get("/api/audit?personaId=maya").expect(200);
     expect(res.body[0]).toMatchObject({ eventType: "wish_updated", summary: 'Changed wish "iPhone 17": paused.' });
 
     const verify = await request(app).get("/api/audit/verify").expect(200);

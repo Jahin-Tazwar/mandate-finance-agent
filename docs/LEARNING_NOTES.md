@@ -331,3 +331,51 @@ Hash = SHA-256 of (previous hash + this entry's content). The first entry points
    curl -X POST http://localhost:4000/api/personas/daniel/policy/check -H "Content-Type: application/json" -d "{\"source\":\"untrusted\",\"type\":\"payment\",\"fromAccount\":\"checking\",\"payee\":\"Account 99-1234\",\"amountCents\":50000}"
    ```
 3. Open http://localhost:4000/api/audit and find your blocked attack, then http://localhost:4000/api/audit/verify.
+
+---
+
+## Day 4: Sign-in, actions, and the AI agent (Oct 15)
+
+Three new pieces. Each one is a single idea.
+
+### 1. Sign-in (`auth/index.ts`)
+
+The idea: **after you sign in, the server gives your browser a ticket (a cookie), and checks that ticket on every request.**
+
+- The ticket looks like `maya.1760000000000.<signature>`: who, until when, and a signature.
+- The signature is made with a secret only the server knows (HMAC). Change "maya" to "daniel" and the signature no longer matches → `401`.
+- Signed in as Maya but asking for `/personas/daniel/...` → `403`. This one check stops the most common API hole (called BOLA).
+- **PIN** = a second check for risky things (approving a payment). 5 wrong → locked for 5 minutes.
+- Passwords and PINs are stored only as **scrypt hashes**: a one-way scramble you can check against, but not reverse.
+
+### 2. Actions (`actions/index.ts` + `actions/executor.ts`)
+
+The idea: **nothing moves money except the executor, and the executor only runs after the policy engine says yes.**
+
+```
+propose → policy engine → allow            → executor runs now   → "executed"
+                        → require_approval → waits for the user  → "pending_approval"
+                        → deny             → nothing happens     → "denied"
+approve (with PIN) → check the hard rules AGAIN → executor runs  → "executed"
+```
+
+Why check again at approval? The balance may have changed since the agent asked. Approving twice → `409`, so nothing is ever paid twice.
+
+### 3. The agent (`agent/`)
+
+The idea: **the AI only talks and proposes. It has no button that moves money.**
+
+A loop: ask the model → if it wants a tool, run it and give back the result → repeat → when it answers in words, stream that answer. Limits: 6 rounds, 3 actions per message.
+
+Before anything goes to the model, the **redactor** replaces personal data: `4111 1111 1111 4821` → `[number ending 4821]`.
+
+Tests use a **scripted fake model** (`setModelForTests`), so they're free, fast and give the same result every time.
+
+### Try it yourself
+1. Sign in, then look at your cookie: start the API, then
+   ```bash
+   curl -i -H "Content-Type: application/json" -d "{\"username\":\"maya\",\"password\":\"maya-demo\"}" http://localhost:4000/api/auth/login
+   ```
+   Find the `Set-Cookie` line. See `HttpOnly`?
+2. Without the cookie: http://localhost:4000/api/personas/maya/accounts → `{"error":"Please sign in"}`.
+3. Read one test: `apps/api/test/actions.test.ts`, the one called "over the limit → waits; wrong PIN refused; right PIN executes once". It tells the whole approval story in 15 lines.

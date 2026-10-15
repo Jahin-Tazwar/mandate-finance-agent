@@ -2,6 +2,7 @@ import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Wish, WishDetail, WishImpact, WishList, WishPreview, type PayCycle } from "@mandate/shared";
 import { createApp } from "../src/app";
+import { signedIn } from "./helpers";
 import { initStore } from "../src/store";
 import { type WishFields, paydayAt, planWish, projectSavings } from "../src/wishes/planner";
 
@@ -97,7 +98,7 @@ describe("wishes for the seed personas", () => {
   const app = createApp();
 
   it("Maya: iPhone first and tight; Kyoto only gets what's left, so not realistic", async () => {
-    const res = await request(app).get("/api/personas/maya/wishes").expect(200);
+    const res = await signedIn(app, "maya").get("/api/personas/maya/wishes").expect(200);
     const list = WishList.parse(res.body);
     expect(list.wishes.map((w) => [w.title, w.status])).toEqual([
       ["iPhone 17", "tight"],
@@ -107,12 +108,12 @@ describe("wishes for the seed personas", () => {
   });
 
   it("Daniel: both wishes are comfortable", async () => {
-    const res = await request(app).get("/api/personas/daniel/wishes").expect(200);
+    const res = await signedIn(app, "daniel").get("/api/personas/daniel/wishes").expect(200);
     expect(WishList.parse(res.body).wishes.every((w) => w.status === "on_track")).toBe(true);
   });
 
   it("wish impact: a $60 purchase delays Maya's iPhone", async () => {
-    const res = await request(app).get("/api/personas/maya/wishes/impact?amountCents=6000").expect(200);
+    const res = await signedIn(app, "maya").get("/api/personas/maya/wishes/impact?amountCents=6000").expect(200);
     const impact = WishImpact.parse(res.body);
     expect(impact.impacts[0]).toMatchObject({ wishId: "wish_maya_1", title: "iPhone 17" });
     expect(impact.message).toMatch(/delays your iPhone 17 by \d+ days/);
@@ -124,44 +125,44 @@ describe("wish API: create, preview, change, delete", () => {
   const laptop = { title: "Laptop", category: "gadget", targetCents: 90_000, targetDate: "2027-06-01" };
 
   it("preview returns a plan but saves nothing", async () => {
-    const res = await request(app).post("/api/personas/daniel/wishes/preview").send(laptop).expect(200);
+    const res = await signedIn(app, "daniel").post("/api/personas/daniel/wishes/preview").send(laptop).expect(200);
     expect(() => WishPreview.parse(res.body)).not.toThrow();
-    const list = await request(app).get("/api/personas/daniel/wishes");
+    const list = await signedIn(app, "daniel").get("/api/personas/daniel/wishes");
     expect(list.body.wishes).toHaveLength(2); // still just the seed wishes
   });
 
   it("create → 201, then it shows up in the list, after the existing wishes", async () => {
-    const res = await request(app).post("/api/personas/daniel/wishes").send(laptop).expect(201);
+    const res = await signedIn(app, "daniel").post("/api/personas/daniel/wishes").send(laptop).expect(201);
     const wish = Wish.parse(res.body);
     expect(wish).toMatchObject({ id: "wish_daniel_3", priority: 3, savedCents: 0, autoSave: true });
 
-    const list = await request(app).get("/api/personas/daniel/wishes");
+    const list = await signedIn(app, "daniel").get("/api/personas/daniel/wishes");
     expect(list.body.wishes.map((w: { id: string }) => w.id)).toContain("wish_daniel_3");
   });
 
   it("patch recalculates the plan; pausing frees its money for the next wish", async () => {
-    const res = await request(app).patch("/api/wishes/wish_maya_1").send({ paused: true }).expect(200);
+    const res = await signedIn(app, "maya").patch("/api/wishes/wish_maya_1").send({ paused: true }).expect(200);
     expect(res.body.status).toBe("paused");
 
     // With the iPhone paused, the Kyoto trip gets all of Maya's $47.06
-    const trip = await request(app).get("/api/wishes/wish_maya_2").expect(200);
+    const trip = await signedIn(app, "maya").get("/api/wishes/wish_maya_2").expect(200);
     expect(WishDetail.parse(trip.body).wish.status).not.toBe("not_realistic");
   });
 
   it("delete → 204, then 404", async () => {
-    await request(app).delete("/api/wishes/wish_maya_2").expect(204);
-    await request(app).get("/api/wishes/wish_maya_2").expect(404);
+    await signedIn(app, "maya").delete("/api/wishes/wish_maya_2").expect(204);
+    await signedIn(app, "maya").get("/api/wishes/wish_maya_2").expect(404);
   });
 
   it("rejects bad input with 400", async () => {
-    await request(app).post("/api/personas/maya/wishes").send({ ...laptop, targetDate: "2026-01-01" }).expect(400); // past
-    await request(app).post("/api/personas/maya/wishes").send({ ...laptop, targetCents: -5 }).expect(400);
-    await request(app).post("/api/personas/maya/wishes").send({ ...laptop, category: "yacht" }).expect(400);
-    await request(app).patch("/api/wishes/wish_maya_1").send({ owner: "someone else" }).expect(400); // unknown field
+    await signedIn(app, "maya").post("/api/personas/maya/wishes").send({ ...laptop, targetDate: "2026-01-01" }).expect(400); // past
+    await signedIn(app, "maya").post("/api/personas/maya/wishes").send({ ...laptop, targetCents: -5 }).expect(400);
+    await signedIn(app, "maya").post("/api/personas/maya/wishes").send({ ...laptop, category: "yacht" }).expect(400);
+    await signedIn(app, "maya").patch("/api/wishes/wish_maya_1").send({ owner: "someone else" }).expect(400); // unknown field
   });
 
-  it("404 for an unknown persona or wish", async () => {
-    await request(app).get("/api/personas/zed/wishes").expect(404);
-    await request(app).patch("/api/wishes/wish_nope_1").send({ paused: true }).expect(404);
+  it("403 for a persona that isn't yours, 404 for an unknown wish", async () => {
+    await signedIn(app, "maya").get("/api/personas/zed/wishes").expect(403);
+    await signedIn(app, "maya").patch("/api/wishes/wish_nope_1").send({ paused: true }).expect(404);
   });
 });
