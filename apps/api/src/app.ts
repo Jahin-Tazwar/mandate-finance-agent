@@ -7,6 +7,7 @@ import { config } from "./config";
 import { HttpError } from "./http/errors";
 import { actionRoutes } from "./routes/actions";
 import { agentRoutes } from "./routes/agent";
+import { anchorRoutes } from "./routes/anchors";
 import { analyticsRoutes } from "./routes/analytics";
 import { authRoutes } from "./routes/auth";
 import { documentRoutes } from "./routes/documents";
@@ -46,6 +47,7 @@ export function createApp() {
   app.use("/api", chatRoutes);
   app.use("/api", agentRoutes);
   app.use("/api", documentRoutes);
+  app.use("/api", anchorRoutes);
 
   // Unknown /api routes get a clear JSON 404 instead of an HTML page.
   app.use("/api", (_req, res) => {

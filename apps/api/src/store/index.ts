@@ -1,4 +1,5 @@
 import type { Account, AccountType, Action, Bill, Category, Mandate, Persona, Transaction, TransactionPage } from "@mandate/shared";
+import { resetAnchors } from "../anchor";
 import { appendAudit, resetAudit } from "../audit";
 import { config } from "../config";
 import { notFound } from "../http/errors";
@@ -22,8 +23,10 @@ function current(): StoreState {
 export function initStore(seedDir = config.seedDir): StoreState {
   state = loadSeed(seedDir);
 
-  // A fresh demo gets a fresh audit log; its first entry records the load
+  // A fresh demo gets a fresh audit log (and old anchors no longer point at it);
+  // its first entry records the load
   resetAudit();
+  resetAnchors();
   appendAudit({
     personaId: null,
     eventType: "seed_loaded",

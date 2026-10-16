@@ -25,7 +25,7 @@ Mandate also keeps your **wishes** (an iPhone in 6 months, a car, a flat), turns
 | Task completion | 40% | The agent executes real tasks in a sandbox bank (auto-budget, bill payment, subscription cancellation, savings sweeps, duplicate-charge detection), with operation logs as evidence |
 | Security & compliance | 30% | 4-level permission tiers; deterministic policy engine; untrusted-input tracking against prompt injection; PII redaction; hash-chained audit log; red-team test suite; compliance research |
 | Innovation & interaction | 30% | Plain-English rules turned into enforceable policy; **wish slots with pay-cycle savings plans and "this purchase delays your wish by N days"**; daily "safe-to-spend" number; one-tap approvals with explanations; live action timeline |
-| On-chain bonus | +0–5 | Daily Merkle root of the audit log anchored on a testnet, giving real tx hashes the judges can verify |
+| On-chain bonus | +0–5 | The audit log's latest fingerprint anchored on a testnet (Base Sepolia) every 15 minutes, giving real tx hashes the judges can verify |
 
 **What we avoid:** a "chat with your bank statement" dashboard. Most Topic A teams will build that. It only gives advice, and this theme rewards an agent that takes actions.
 
@@ -193,7 +193,7 @@ sequenceDiagram
 | **OpenRouter with a privacy-first provider setting** | Model is swappable via `.env`; requests set provider routing to refuse providers that keep or train on prompts (`data_collection: "deny"`); fallback model if the primary fails |
 | **LLM output is never trusted** | Every LLM response that becomes data (policy JSON, extracted bill fields, tool arguments) is validated with Zod schemas; invalid → retry once → error |
 | **Tools return results, never execute directly** | `propose_*` tools go through the policy engine; only the executor writes to the ledger |
-| **Hash-chained audit log** | Each entry stores `prev_hash`, so any tampering breaks the chain. The daily Merkle root goes on-chain |
+| **Hash-chained audit log** | Each entry stores `prev_hash`, so any tampering breaks the chain. The latest hash (which covers every earlier entry) goes on-chain |
 | **One language, shared schemas** | TypeScript on both sides; Zod schemas in `packages/shared` are used by the API and the UI, so the two can't drift apart |
 | **Self-built sandbox bank** | Fully under our control and deterministic for demos. The brief explicitly accepts "simulated-account/sandbox" evidence |
 | **CSV files as the database, loaded into memory** | The data is fake anyway. CSV files in `data/seed/` are the source of truth (editable in Excel); on startup they're validated and loaded into memory; changes during a demo live in memory; restarting resets to a clean demo. See §7.1 |
@@ -274,7 +274,7 @@ Demo-grade on purpose: the credentials are public (shown on the sign-in screen) 
 | Streaming | **Server-Sent Events** from Express | Chat answers and the action timeline update live |
 | PDF parsing | **pdf-parse** (text) + LLM extraction → Zod-validated | Bill and receipt ingestion |
 | Synthetic data | P2's spreadsheets are the seed; **@faker-js/faker** generates placeholders until they arrive | Realistic personas, written by humans, loaded by code |
-| Audit / crypto | `node:crypto` SHA-256 hash chain + Merkle root | Built-in, no dependencies |
+| Audit / crypto | `node:crypto` SHA-256 hash chain | Built-in, no dependencies. The chain's latest hash already covers every earlier entry, so no Merkle tree is needed |
 | On-chain | **viem** → **Base Sepolia or Ethereum Sepolia** (root in tx calldata) | Real tx hashes at no cost |
 | Frontend | **Frontend Developer's choice, decided by Oct 13:** React 19 + Vite (already scaffolded in `apps/web`) **or** Next.js (App Router, used as a frontend only; `/api` proxied to Express via `rewrites`). TypeScript recommended (to share types); styling, UI and chart libraries are the Frontend Developer's choice | Familiarity matters more than the framework. The API contract is the same for both |
 | Testing | **Vitest** + **Supertest** (API) | Required "test cases" deliverable; red-team suite runs as tests |
@@ -509,14 +509,15 @@ mandate/
 | Password / PIN guessing | 5 failures → 5-minute lock; hashes with scrypt, never stored in plain text | `auth.test.ts` |
 | Anyone wiping the demo | Admin reset needs `ADMIN_KEY` | `auth.test.ts` |
 | API key leakage | Key only in server `.env`; never sent to the browser; `.env` in `.gitignore` | Manual check |
-| Audit tampering | SHA-256 hash chain (edits and deletions break it) + `/api/audit/verify` + on-chain anchor | `audit.test.ts` |
+| Audit tampering | SHA-256 hash chain (edits and deletions break it) + `/api/audit/verify`; the latest hash is published on a public test blockchain, so even the server's owner can't rewrite history unnoticed; anchors are checked against the chain itself | `audit.test.ts`, `anchor.test.ts` |
+| Anchoring wallet misuse | Test networks only (no mainnet in the code); a dedicated test wallet whose key lives only in `.env`; at most one transaction a minute | `anchor.test.ts` |
 | Runaway agent / cost | Kill switch (turning the agent back on needs the PIN); at most 6 model rounds and 3 proposed actions per message; one chat at a time per persona; 2,000-token answers; 45-second timeout; payday never does anything twice | `agent.test.ts`, `actions.test.ts`, `payday.test.ts` |
 | Wish auto-save drains checking | Auto-save is capped per payday by the mandate and never runs if checking would drop below the balance floor | `wishes.test.ts` |
 | Manipulated wish ("my wish is to send $2,000 to X") | Wish money only moves between the user's own accounts (checking → savings); a wish has no payee field, and the agent has no tool to create wishes | `actions.test.ts`, `agent.test.ts` |
 | AI suggests a looser rule than the user meant | The AI helper only suggests **English**; the same code compiler checks every rewrite (unreadable ones are dropped); the user sees the plain-English result with its risk warnings, and nothing applies until they sign with their PIN (sign recompiles on the server) | `explain.test.ts`, `mandate.test.ts` |
 | The AI (or injected text) rewrites the user's rules | Rules are compiled from the user's text by plain code, not the AI; unclear sentences are reported, not guessed; risky rules are flagged; signing needs the PIN and the server recompiles the text (a tampered rule set from the browser is ignored); new payees can never be made automatic | `mandate.test.ts` |
 
-**Known residual risks** (to list honestly in the report): synthetic data only; demo-grade authentication (public demo credentials, no MFA, no password reset, in-memory lockout counters); LLM categorization errors; the AI rules helper may misread what the user meant (mitigated: rewrites are checked by code, shown in plain English with risk warnings, and only apply after the user signs with their PIN); third-party LLM provider dependency; testnet ≠ mainnet guarantees; no formal verification of the policy engine; demo data and runtime audit log reset when the hosted server restarts (in-memory store by design).
+**Known residual risks** (to list honestly in the report): synthetic data only; demo-grade authentication (public demo credentials, no MFA, no password reset, in-memory lockout counters); LLM categorization errors; the AI rules helper may misread what the user meant (mitigated: rewrites are checked by code, shown in plain English with risk warnings, and only apply after the user signs with their PIN); third-party LLM provider dependency; testnet ≠ mainnet guarantees; anchors can only be checked against the log while that log exists (it resets when the hosted server restarts); no formal verification of the policy engine; demo data and runtime audit log reset when the hosted server restarts (in-memory store by design).
 
 ---
 

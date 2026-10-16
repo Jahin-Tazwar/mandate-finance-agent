@@ -14,7 +14,8 @@
     "start": "npm start -w @mandate/api",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "seed:placeholder": "npm run seed:placeholder -w @mandate/api --"
+    "seed:placeholder": "npm run seed:placeholder -w @mandate/api --",
+    "anchor:wallet": "npm run anchor:wallet -w @mandate/api"
   },
   "devDependencies": {
     "concurrently": "^9.2.0"

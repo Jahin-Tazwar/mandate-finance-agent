@@ -1,4 +1,4 @@
-# Mandate API Contract (v3.6)
+# Mandate API Contract (v3.7)
 
 The agreement between the backend (Tech Lead) and the frontend (Frontend Developer).
 **The frontend can build every screen today using the example responses below as mock data**, then switch to the real API as each endpoint goes live.
@@ -729,7 +729,7 @@ Needs a session: you see **only your own persona's entries**, newest first. Opti
   }
 ]
 ```
-`eventType`: `seed_loaded`, `signed_in`, `sign_in_failed`, `policy_check`, `wish_created`, `wish_updated`, `wish_deleted`, `action_executed`, `action_pending_approval`, `action_denied`, `action_approved`, `action_rejected`, `payday_run`, `agent_stopped`, `agent_started`, `document_uploaded`, `mandate_signed`, `mandate_explained` (counts only), `agent_chat` (one per chat message: tools used, actions proposed, how many items of personal data were redacted; never the message text). `actor.type`: `user` · `agent` · `system`. Each entry's `prevHash` is the previous entry's `hash`; a reset starts a fresh chain.
+`eventType`: `seed_loaded`, `signed_in`, `sign_in_failed`, `policy_check`, `wish_created`, `wish_updated`, `wish_deleted`, `action_executed`, `action_pending_approval`, `action_denied`, `action_approved`, `action_rejected`, `payday_run`, `agent_stopped`, `agent_started`, `document_uploaded`, `mandate_signed`, `mandate_explained` (counts only), `audit_anchored`, `agent_chat` (one per chat message: tools used, actions proposed, how many items of personal data were redacted; never the message text). `actor.type`: `user` · `agent` · `system`. Each entry's `prevHash` is the previous entry's `hash`; a reset starts a fresh chain.
 
 ### ✅ `GET /api/audit/verify`
 ```json
@@ -741,12 +741,29 @@ Needs a session: you see **only your own persona's entries**, newest first. Opti
 ```
 If any entry was changed or removed: `{ "valid": false, "entries": 42, "brokenAt": 17 }` (the first broken entry).
 
-### 🛠 `GET /api/anchors` (Oct 17, stretch)
+### ✅ On-chain anchors
+The audit log's latest fingerprint is published on a public **test** blockchain (Base Sepolia), so anyone can check the log wasn't rewritten later. It happens every 15 minutes when there's something new, or on demand. Anchoring is only on when the server has a test wallet (`GET /api/anchors/status`).
+
+- `GET /api/anchors/status` (public) → `{ "enabled": true, "chain": "base-sepolia" }`
+- `GET /api/anchors` (public, newest first):
 ```json
 [
-  { "date": "2026-10-17", "merkleRoot": "0x5be1…", "chain": "base-sepolia", "txHash": "0xa41f…", "explorerUrl": "https://sepolia.basescan.org/tx/0xa41f…" }
+  {
+    "seq": 42,
+    "hash": "5be1…(64 hex)",
+    "chain": "base-sepolia",
+    "txHash": "0xa41f…",
+    "explorerUrl": "https://sepolia.basescan.org/tx/0xa41f…",
+    "anchoredAt": "2026-10-17T09:30:00.000Z",
+    "matchesLog": true
+  }
 ]
 ```
+`seq` 42 means "the whole log up to entry #42". `matchesLog`: entry #42 in the log still has this hash.
+- `POST /api/audit/anchor` (signed in) → `{ "anchor": Anchor }`, or `{ "anchor": null }` if nothing happened since the last one. Not set up → `503`; less than a minute since the last → `429` with `retryAfterSeconds`; the network refused (e.g. no test ETH) → `502`.
+- `GET /api/anchors/:txHash/check` (public) → reads the transaction **from the blockchain itself** and compares it with the log: `{ "txHash", "onChain": true, "seq": 42, "hash": "5be1…", "matchesLog": true }`.
+
+UI (Audit log screen): a "Verified on-chain" badge with a **View transaction** link (`explorerUrl`) on anchored entries, and an "Anchor now" button. On the explorer, the transaction's input data, viewed as UTF-8, reads `mandate-audit:v1:42:5be1…`.
 
 ---
 
@@ -771,6 +788,7 @@ If any entry was changed or removed: `{ "valid": false, "entries": 42, "brokenAt
 ---
 
 ## Changelog
+- **v3.7 (Oct 16):** on-chain anchors are live: `GET anchors`, `GET anchors/status`, `POST audit/anchor`, `GET anchors/:txHash/check`. An anchor is the log's latest entry (`seq` + `hash`), not a daily Merkle root (the hash chain already covers every earlier entry).
 - **v3.6 (Oct 16):** `mandate/compile` gains `notUnderstood`. New `POST mandate/explain`: AI explains sentences the checker didn't understand and suggests rewrites, each checked by the checker before it's shown (saves nothing).
 - **v3.5 (Oct 16):** live: **Run payday** (`agent/run`, now also returns `paycheck`), **kill switch**, **bill upload** (`documents`, now also returns `actions`), **timeline** (SSE), **rules editor** (`mandate/compile`, `mandate/sign`; sign takes `naturalLanguage` + `pin` and ignores any `policy`), chat answers **word by word**. `Mandate` gained `signedBy`. Bills include uploaded ones (`source: "document"`). New audit event types.
 - **v3.4 (Oct 15):** **sign-in is live** (`auth/*`, session cookie, `401`/`403`, PIN with lockout, `x-admin-key` on reset when set). **Actions are live**: chat (SSE), approvals, decision, actions history, wish top-up (`contribute`), contributions in wish detail. `Action.params` uses `payee` (a name), not `payeeId`; `Action` gained `decidedAt`, `approvedBy`, `executedAt`; `agentRationale` can be `null`. `GET /api/audit` is now scoped to the signed-in persona. Unknown personas in URLs give `403` (not `404`) when signed in. Temporary `AUTH_DISABLED` switch for the hosted server until the sign-in screen ships.

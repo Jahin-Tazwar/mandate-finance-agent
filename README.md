@@ -41,6 +41,7 @@ Environment variables on Render (Settings → Environment):
 | `ADMIN_KEY` | a long random string (protects "reset demo") |
 | `OPENROUTER_API_KEY`, `LLM_MODEL`, `LLM_FALLBACK_MODEL` | for the chat agent |
 | `AUTH_DISABLED` | `true` **only until** the web app has its sign-in screen, then remove it |
+| `ANCHOR_PRIVATE_KEY` | the **test** wallet for on-chain anchoring (create it with `npm run anchor:wallet`, copy the value from your `.env`) |
 | `LLM_ALLOW_PROVIDER_TRAINING` | `true` only while using free models in development. **Before the demo:** remove it and switch to paid models (free providers may keep prompts) |
 
 `npm run build` puts the website in `apps/web/dist/`. When that folder exists, the API serves it: real files (scripts, styles) directly, and any other page address (e.g. `/wishes/new`) gets `index.html` so React picks the screen. Unknown `/api/...` addresses still get a JSON 404. Locally, `npm run build && npm start` runs it the same way at http://localhost:4000.
@@ -62,6 +63,7 @@ docs/            API contract, team guide, learning notes, (later) architecture 
 |---|---|
 | `npm run dev` | Start API and web app together |
 | `npm run dev:api` / `npm run dev:web` | Start one of them |
+| `npm run anchor:wallet` | Create (or show) the test wallet for on-chain anchoring and its test ETH balance |
 | `npm run build` / `npm start` | Build the website, then run API + website on one port (what Render does) |
 | `npm test` | Run the automated tests |
 | `npm run typecheck` | Check types across all packages |

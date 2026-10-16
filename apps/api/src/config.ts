@@ -69,4 +69,16 @@ export const config = {
      */
     allowProviderTraining: process.env.LLM_ALLOW_PROVIDER_TRAINING === "true",
   },
+
+  /**
+   * On-chain anchoring: the audit log's latest fingerprint is published on a TEST
+   * blockchain. Only test chains exist in the code, so real money can never be involved.
+   * No key = anchoring is off. Never used while tests run (they use a fake chain).
+   */
+  anchor: {
+    privateKey: process.env.VITEST ? null : process.env.ANCHOR_PRIVATE_KEY || null,
+    /** Empty = the chain's public endpoint (fine for a demo). */
+    rpcUrl: process.env.RPC_URL || null,
+    chain: process.env.ANCHOR_CHAIN === "sepolia" ? ("sepolia" as const) : ("base-sepolia" as const),
+  },
 };

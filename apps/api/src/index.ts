@@ -1,3 +1,4 @@
+import { anchorNow, anchoringReady } from "./anchor";
 import { createApp } from "./app";
 import { config } from "./config";
 import { initStore } from "./store";
@@ -20,6 +21,15 @@ try {
 if (config.authDisabled) console.warn("WARNING: AUTH_DISABLED=true: requests without a session are let through.");
 if (config.llm.allowProviderTraining) {
   console.warn("WARNING: LLM_ALLOW_PROVIDER_TRAINING=true: AI providers may keep prompts. Development only.");
+}
+
+// On-chain anchoring (only if a test wallet is set up): publish the log's fingerprint
+// every 15 minutes when something new happened. A failure is logged, never fatal.
+if (anchoringReady()) {
+  console.log(`On-chain anchoring is on (${config.anchor.chain}).`);
+  setInterval(() => {
+    anchorNow("scheduled").catch((err: Error) => console.error(`Anchoring failed: ${err.message}`));
+  }, 15 * 60_000);
 }
 
 // Data is loaded: start answering requests

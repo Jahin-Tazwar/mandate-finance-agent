@@ -129,7 +129,7 @@ This is the document the judges read. **You write it, the Tech Lead checks the t
    4. allow / ask / block
 4. **Sign-in and approvals**: who can see what, why approvals need a PIN, the lockout after 5 tries.
 5. **Data protection**: fake data; redaction; the AI provider is told not to keep data; nothing stored permanently.
-6. **The audit log**: what it records and how tampering is detected.
+6. **The audit log**: what it records, how tampering is detected, and **on-chain anchoring**: the log's latest fingerprint is published on a public test blockchain, so even we can't rewrite history without it showing.
 7. **Attack results**: a table of your attacks with PASS/FAIL (from Job 3). This is our **proof**, and the strongest part of the document.
 8. **Known risks and limits.** Be honest; judges respect it. Include at least these:
    - The demo passwords are public, and there is no two-factor login or password reset.
@@ -156,6 +156,7 @@ This is the document the judges read. **You write it, the Tech Lead checks the t
 | **Audit log / hash chain** | A record where each entry holds a fingerprint of the previous one, so edits are detected |
 | **Redaction** | Hiding personal details (card numbers, emails) before sending text to the AI |
 | **Kill switch** | One button that stops the AI from acting at all |
+| **On-chain anchor** | Publishing the audit log's fingerprint on a public blockchain, where nobody can change it, as a timestamped proof |
 | **Least privilege** | Give the AI only the permissions it needs, nothing more |
 
 ---
