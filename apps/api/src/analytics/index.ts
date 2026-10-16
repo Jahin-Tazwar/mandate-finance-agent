@@ -1,7 +1,7 @@
 import type { Bill, Budget, Forecast, PayCycle, Subscription } from "@mandate/shared";
 import { config } from "../config";
 import { monthOf } from "../lib/dates";
-import { allTransactions, cancelledSubscriptions, getAccount, subscriptionUsage } from "../store";
+import { allTransactions, cancelledSubscriptions, getAccount, listActions, listDocumentBills, subscriptionUsage } from "../store";
 import { buildBudget } from "./budget";
 import { findDuplicateCharges, listBills, listSubscriptions } from "./commitments";
 import { buildForecast, projectChecking, safeToSpendToday } from "./forecast";
@@ -47,7 +47,13 @@ export function getSubscriptions(personaId: string): Subscription[] {
 
 export function getBills(personaId: string): Bill[] {
   const c = context(personaId);
-  return listBills(personaId, c.series, c.today);
+
+  // Bills from uploaded documents too ("paid" once a payment for them has gone through)
+  const paidIds = new Set(listActions(personaId).filter((a) => a.status === "executed").map((a) => a.params.billId));
+  const fromDocuments = listDocumentBills(personaId).map((b) => (paidIds.has(b.id) ? { ...b, status: "paid" as const } : b));
+
+  // Soonest first
+  return [...listBills(personaId, c.series, c.today), ...fromDocuments].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 }
 
 /** The dashboard forecast: what will probably happen, everyday spending included. */
@@ -74,4 +80,9 @@ export function getBudget(personaId: string, month?: string): Budget {
     subscriptions: listSubscriptions(personaId, c.series, subscriptionUsage(personaId), c.today),
     duplicates: findDuplicateCharges(c.transactions, c.today),
   });
+}
+
+/** Charges that look like the same purchase billed twice (last 60 days). */
+export function getDuplicateCharges(personaId: string) {
+  return findDuplicateCharges(allTransactions(personaId), config.today);
 }

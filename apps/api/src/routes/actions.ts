@@ -2,7 +2,9 @@ import { Router } from "express";
 import { z } from "zod";
 import { ActionDecisionBody, ContributeBody } from "@mandate/shared";
 import { decideAction, listActions, listApprovals, proposeAction } from "../actions";
+import { listen } from "../actions/events";
 import { assertOwner } from "../auth";
+import { openStream } from "../http/sse";
 import { getAction, getPersona, getWish } from "../store";
 
 export const actionRoutes = Router();
@@ -40,4 +42,22 @@ actionRoutes.post("/wishes/:wishId/contribute", (req, res) => {
   assertOwner(res, wish.personaId); // Reject: someone else's wish → 403
   const action = proposeAction(wish.personaId, { source: "user", type: "wish_contribution", wishId: wish.id, amountCents });
   res.status(201).json(action);
+});
+
+// Live updates: an "action" event whenever one of this persona's actions is created or
+// changes status (approved, rejected...). Stays open until the browser closes it.
+actionRoutes.get("/personas/:personaId/timeline", (req, res) => {
+  const send = openStream(res);
+  send("ready", {}); // tells the browser the stream is connected
+
+  const stop = listen(req.params.personaId, (action) => send("action", action));
+
+  // A comment line every 25 s keeps proxies from closing a quiet connection
+  const heartbeat = setInterval(() => res.write(": keep-alive\n\n"), 25_000);
+
+  // The browser went away: stop listening (otherwise listeners pile up)
+  req.on("close", () => {
+    stop();
+    clearInterval(heartbeat);
+  });
 });

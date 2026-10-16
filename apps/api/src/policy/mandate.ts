@@ -88,5 +88,6 @@ export function defaultMandate(personaId: string, signedAt: string): Mandate {
     signedAt,
     policy,
     summary: summarize(policy),
+    signedBy: null,
   };
 }

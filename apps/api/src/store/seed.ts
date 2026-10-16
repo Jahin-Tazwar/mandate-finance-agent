@@ -5,6 +5,7 @@ import {
   WishCategory,
   type Account,
   type Action,
+  type Bill,
   type Mandate,
   type Persona,
   type Transaction,
@@ -102,6 +103,10 @@ export interface StoreState {
   chats: Map<string, ChatTurn[]>;
   /** Counters for new ids, e.g. "act" → 7 means the next action is act_8. */
   counters: Map<string, number>;
+  /** Personas whose demo paycheck has already landed (once per reset). */
+  paid: Set<string>;
+  /** Bills read from uploaded documents, per persona (always untrusted). */
+  documentBills: Map<string, Bill[]>;
 }
 
 /** One saving for a wish (see WishDetail.contributions in the API contract). */
@@ -149,6 +154,8 @@ export function loadSeed(seedDir: string): StoreState {
     cancelled: new Map(),
     chats: new Map(),
     counters: new Map(),
+    paid: new Set(),
+    documentBills: new Map(),
   };
 
   // ---- Personas, their accounts and their transactions ----
@@ -205,6 +212,7 @@ export function loadSeed(seedDir: string): StoreState {
     state.actions.set(row.id, []);
     state.cancelled.set(row.id, new Set());
     state.chats.set(row.id, []);
+    state.documentBills.set(row.id, []);
   }
 
   // ---- Wishes ----

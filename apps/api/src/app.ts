@@ -6,8 +6,10 @@ import { requireOwnPersona, requireSession } from "./auth";
 import { config } from "./config";
 import { HttpError } from "./http/errors";
 import { actionRoutes } from "./routes/actions";
+import { agentRoutes } from "./routes/agent";
 import { analyticsRoutes } from "./routes/analytics";
 import { authRoutes } from "./routes/auth";
+import { documentRoutes } from "./routes/documents";
 import { chatRoutes } from "./routes/chat";
 import { personaRoutes } from "./routes/personas";
 import { policyRoutes } from "./routes/policy";
@@ -42,6 +44,8 @@ export function createApp() {
   app.use("/api", actionRoutes);
   app.use("/api", policyRoutes);
   app.use("/api", chatRoutes);
+  app.use("/api", agentRoutes);
+  app.use("/api", documentRoutes);
 
   // Unknown /api routes get a clear JSON 404 instead of an HTML page.
   app.use("/api", (_req, res) => {

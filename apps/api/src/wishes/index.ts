@@ -151,3 +151,14 @@ export function getWishImpact(personaId: string, amountCents: number): WishImpac
     message: `Spending ${usd(amountCents)} delays your ${target.wish.title} by ${delayDays} day${delayDays === 1 ? "" : "s"}.`,
   };
 }
+
+/**
+ * What auto-save would put aside this payday, wish by wish (most important first).
+ * Only wishes with auto-save on that are actually receiving money.
+ * e.g. Maya → [{ wishId: "wish_maya_1", title: "iPhone 17", amountCents: 4039 }]
+ */
+export function autoSavePlan(personaId: string): { wishId: string; title: string; amountCents: number }[] {
+  return planAll(personaId)
+    .planned.filter((p) => p.wish.autoSave && p.paceCents > 0)
+    .map((p) => ({ wishId: p.wish.id, title: p.wish.title, amountCents: p.paceCents }));
+}

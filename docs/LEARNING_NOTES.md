@@ -379,3 +379,36 @@ Tests use a **scripted fake model** (`setModelForTests`), so they're free, fast 
    Find the `Set-Cookie` line. See `HttpOnly`?
 2. Without the cookie: http://localhost:4000/api/personas/maya/accounts → `{"error":"Please sign in"}`.
 3. Read one test: `apps/api/test/actions.test.ts`, the one called "over the limit → waits; wrong PIN refused; right PIN executes once". It tells the whole approval story in 15 lines.
+
+---
+
+## Day 5: Payday, bill upload, live updates, rules editor (Oct 16)
+
+Four pieces, one idea each.
+
+### 1. Run payday (`agent/payday.ts`)
+**The idea:** payday is a checklist in plain code, not AI. Pay lands → pay bills due before the next payday → save for wishes → offer to cancel unused subscriptions → offer to dispute duplicates. Each one is only a *proposal*: the policy engine decides, exactly like in chat. Running it twice does nothing twice.
+
+### 2. Bill upload (`documents/`)
+**The idea:** a document is **data, never instructions.**
+- The PDF's text is read (hidden white text too: that's how real attacks hide).
+- The bill's details come from plain patterns ("Amount due: $132.80"), not from the AI.
+- Sentences aimed at an AI ("ignore your rules…") become **warnings**.
+- Everything from the document is marked `untrusted` → always needs approval, can never add a new payee.
+- Any payment the document asks for is checked *as if the AI had obeyed*. It's blocked, which proves safety doesn't depend on the AI noticing the trick.
+
+### 3. Live updates (Server-Sent Events)
+**The idea:** the server keeps the connection open and writes small messages whenever something happens:
+```
+event: action
+data: {"id":"act_3","status":"executed",...}
+```
+Chat uses it for word-by-word answers; the timeline uses it so Approvals update without refreshing.
+
+### 4. Rules editor (`policy/compile.ts`)
+**The idea:** the user writes rules in English, **plain code** turns them into data. Not the AI, because then a prompt injection could rewrite the rules that limit the AI. What it doesn't understand is reported, not guessed. Signing needs the PIN, and the server re-reads the text itself.
+
+### Try it yourself
+1. Read the test "Maya: pay lands, phone bill paid, $40.39 saved…" in `apps/api/test/payday.test.ts`.
+2. Open `data/bills/bill_03_MALICIOUS_white_text.pdf` and select all the text (Ctrl+A). You'll find the hidden sentence.
+3. In `apps/api/test/mandate.test.ts`, read "signing needs the PIN… and the new rules apply at once": the same $35 bill goes from automatic to "ask me" after new rules are signed.

@@ -1,4 +1,4 @@
-import type { Account, AccountType, Action, Category, Mandate, Persona, Transaction, TransactionPage } from "@mandate/shared";
+import type { Account, AccountType, Action, Bill, Category, Mandate, Persona, Transaction, TransactionPage } from "@mandate/shared";
 import { appendAudit, resetAudit } from "../audit";
 import { config } from "../config";
 import { notFound } from "../http/errors";
@@ -182,6 +182,12 @@ export function getMandate(personaId: string): Mandate {
   return current().mandates.get(personaId)!;
 }
 
+/** Replaces the persona's signed rules. */
+export function setMandate(personaId: string, mandate: Mandate): void {
+  getPersona(personaId);
+  current().mandates.set(personaId, mandate);
+}
+
 /** false = the kill switch is on: the agent may only watch. */
 export function isAgentEnabled(personaId: string): boolean {
   getPersona(personaId);
@@ -304,4 +310,30 @@ export function updateAction(actionId: string, changes: Partial<Action>): Action
 export function chatHistory(personaId: string): ChatTurn[] {
   getPersona(personaId);
   return current().chats.get(personaId)!;
+}
+
+// ---- The demo payday ----
+
+/** Has this persona's demo paycheck already landed? (Once per reset, so it's never paid twice.) */
+export const paycheckLanded = (personaId: string) => current().paid.has(personaId);
+
+/** Remembers that the demo paycheck landed. */
+export function markPaycheckLanded(personaId: string): void {
+  current().paid.add(personaId);
+}
+
+// ---- Bills from uploaded documents (untrusted: they came from outside the bank) ----
+
+/** Stores a bill read from a document and returns it with its new id, e.g. "bill_doc_1". */
+export function addDocumentBill(personaId: string, bill: Omit<Bill, "id">): Bill {
+  getPersona(personaId);
+  const stored: Bill = { ...bill, id: nextId("bill_doc") };
+  current().documentBills.get(personaId)!.push(stored);
+  return stored;
+}
+
+/** The persona's bills from documents, oldest first. */
+export function listDocumentBills(personaId: string): readonly Bill[] {
+  getPersona(personaId);
+  return current().documentBills.get(personaId)!;
 }

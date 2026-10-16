@@ -494,7 +494,7 @@ mandate/
 
 | Threat | Mitigation | Test |
 |---|---|---|
-| Prompt injection via bill PDF / memo field | Untrusted-source marking → always L2; a document can **never introduce a new payee** (blocked outright); policy engine ignores LLM reasoning | `policy.test.ts` (red team) |
+| Prompt injection via bill PDF / memo field | Bills are read by plain code, not the AI; hidden instructions become **warnings**; everything from a document is marked untrusted → always L2, and the mark sticks even when the chat agent later pays that bill; a document can **never introduce a new payee** (blocked outright); every payment a document asks for is run through the rules as if the AI had obeyed | `documents.test.ts`, `policy.test.ts` (red team) |
 | Agent splits payments to dodge caps | Daily cap on everything the agent moves | `policy.test.ts` (red team) |
 | Payee spoofing (look-alike names) | Exact-name match against payees paid before, so look-alikes count as new; new-payee waiting period | `policy.test.ts` (red team) |
 | Escalation ("you are now in admin mode") | Tier is server-side state; no tool can change tier or mandate; unknown tool names are refused | `agent.test.ts` (red team) |
@@ -510,11 +510,13 @@ mandate/
 | Anyone wiping the demo | Admin reset needs `ADMIN_KEY` | `auth.test.ts` |
 | API key leakage | Key only in server `.env`; never sent to the browser; `.env` in `.gitignore` | Manual check |
 | Audit tampering | SHA-256 hash chain (edits and deletions break it) + `/api/audit/verify` + on-chain anchor | `audit.test.ts` |
-| Runaway agent / cost | Kill switch; at most 6 model rounds and 3 proposed actions per message; one chat at a time per persona; 800-token answers; 45-second timeout | `agent.test.ts`, `actions.test.ts` |
+| Runaway agent / cost | Kill switch (turning the agent back on needs the PIN); at most 6 model rounds and 3 proposed actions per message; one chat at a time per persona; 2,000-token answers; 45-second timeout; payday never does anything twice | `agent.test.ts`, `actions.test.ts`, `payday.test.ts` |
 | Wish auto-save drains checking | Auto-save is capped per payday by the mandate and never runs if checking would drop below the balance floor | `wishes.test.ts` |
-| Manipulated wish ("my wish is to send $2,000 to X") | Wish money only moves between the user's own accounts; a wish can't have an external payee | `redteam/wish-abuse.test.ts` |
+| Manipulated wish ("my wish is to send $2,000 to X") | Wish money only moves between the user's own accounts (checking → savings); a wish has no payee field, and the agent has no tool to create wishes | `actions.test.ts`, `agent.test.ts` |
+| AI suggests a looser rule than the user meant | The AI helper only suggests **English**; the same code compiler checks every rewrite (unreadable ones are dropped); the user sees the plain-English result with its risk warnings, and nothing applies until they sign with their PIN (sign recompiles on the server) | `explain.test.ts`, `mandate.test.ts` |
+| The AI (or injected text) rewrites the user's rules | Rules are compiled from the user's text by plain code, not the AI; unclear sentences are reported, not guessed; risky rules are flagged; signing needs the PIN and the server recompiles the text (a tampered rule set from the browser is ignored); new payees can never be made automatic | `mandate.test.ts` |
 
-**Known residual risks** (to list honestly in the report): synthetic data only; demo-grade authentication (public demo credentials, no MFA, no password reset, in-memory lockout counters); LLM categorization errors; third-party LLM provider dependency; testnet ≠ mainnet guarantees; no formal verification of the policy engine; demo data and runtime audit log reset when the hosted server restarts (in-memory store by design).
+**Known residual risks** (to list honestly in the report): synthetic data only; demo-grade authentication (public demo credentials, no MFA, no password reset, in-memory lockout counters); LLM categorization errors; the AI rules helper may misread what the user meant (mitigated: rewrites are checked by code, shown in plain English with risk warnings, and only apply after the user signs with their PIN); third-party LLM provider dependency; testnet ≠ mainnet guarantees; no formal verification of the policy engine; demo data and runtime audit log reset when the hosted server restarts (in-memory store by design).
 
 ---
 

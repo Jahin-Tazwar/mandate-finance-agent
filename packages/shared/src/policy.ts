@@ -58,9 +58,32 @@ export const Mandate = z.object({
   naturalLanguage: z.string(),
   signedAt: z.string().nullable(),
   policy: Policy,
-  /** One plain sentence per rule, e.g. "Checking never goes below $200.00." */
+  /** One plain sentence per rule, e.g. "Checking never goes below $200." */
   summary: z.array(z.string()),
+  /** Who signed it (persona id); null for the starting rules. */
+  signedBy: z.string().nullable().optional(),
 });
+
+/** POST /api/personas/:id/mandate/compile */
+export const CompileBody = z.object({ text: z.string().trim().min(1).max(2_000) });
+
+/** POST /api/personas/:id/mandate/explain: up to 10 sentences the compiler didn't understand. */
+export const ExplainBody = z.object({ sentences: z.array(z.string().trim().min(1).max(300)).min(1).max(10) });
+
+/** One suggestion from the AI helper, already checked by the compiler. */
+export const RuleSuggestion = z.object({
+  original: z.string(),
+  /** Plain English the compiler understands, or null (no rule fits, or the AI's rewrite failed the check). */
+  rewrite: z.string().nullable(),
+  explanation: z.string(),
+  /** What the rewrite would mean, one sentence per rule (empty if no rewrite). */
+  summary: z.array(z.string()),
+  /** Risks in the rewrite, e.g. "Anything not covered by a rule will happen automatically…". */
+  warnings: z.array(z.string()),
+});
+
+/** POST /api/personas/:id/mandate/sign. The rules are compiled again from the text on the server. */
+export const SignBody = z.object({ naturalLanguage: z.string().trim().min(1).max(2_000), pin: z.string().regex(/^\d{4}$/, "PIN is 4 digits") });
 
 // ---- Actions the agent (or the user) proposes ----
 
@@ -100,5 +123,6 @@ export type ActionSource = z.infer<typeof ActionSource>;
 export type Rule = z.infer<typeof Rule>;
 export type Policy = z.infer<typeof Policy>;
 export type Mandate = z.infer<typeof Mandate>;
+export type RuleSuggestion = z.infer<typeof RuleSuggestion>;
 export type ProposedAction = z.infer<typeof ProposedAction>;
 export type PolicyDecision = z.infer<typeof PolicyDecision>;

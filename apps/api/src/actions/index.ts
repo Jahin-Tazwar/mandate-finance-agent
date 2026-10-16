@@ -3,11 +3,13 @@ import { getBills, getSubscriptions } from "../analytics";
 import { appendAudit } from "../audit";
 import { verifyPin } from "../auth";
 import { HttpError } from "../http/errors";
+import { shortDate } from "../lib/dates";
 import { usd } from "../lib/money";
 import { evaluate } from "../policy/engine";
 import { policyContext } from "../policy";
 import { addAction, allTransactions, getAction, getWish, listActions, nextId, updateAction } from "../store";
 import { getWishImpact } from "../wishes";
+import { announce } from "./events";
 import { execute } from "./executor";
 
 /**
@@ -68,7 +70,7 @@ function summarize(personaId: string, action: ProposedAction): string {
       return `Cancel ${action.merchant}`;
     case "dispute": {
       const tx = allTransactions(personaId).find((t) => t.id === action.transactionId);
-      return tx ? `Dispute ${tx.merchant} charge of ${usd(-tx.amountCents)} on ${tx.date}` : `Dispute transaction ${action.transactionId}`;
+      return tx ? `Dispute ${tx.merchant} charge of ${usd(-tx.amountCents)} on ${shortDate(tx.date)}` : `Dispute transaction ${action.transactionId}`;
     }
   }
 }
@@ -94,6 +96,12 @@ const actorOf = (personaId: string, source: ProposedAction["source"]) =>
  */
 export function proposeAction(personaId: string, proposed: ProposedAction, rationale: string | null = null): Action {
   assertTargetsExist(personaId, proposed); // 404 / 403
+
+  // Taint tracking: paying a bill that came from a document means the details came from
+  // outside, so the agent's proposal counts as "untrusted" (always needs approval, can't add payees)
+  if (proposed.type === "payment" && proposed.source === "agent" && proposed.billId?.startsWith("bill_doc_")) {
+    proposed = { ...proposed, source: "untrusted" };
+  }
   const verdict = evaluate(proposed, policyContext(personaId));
   const now = new Date().toISOString();
 
@@ -134,6 +142,7 @@ export function proposeAction(personaId: string, proposed: ProposedAction, ratio
     summary: `${word}: ${action.summary} (source: ${proposed.source}).`,
     payload: { actionId: action.id, action: proposed, decision: verdict.decision, tier: verdict.tier, reasons: verdict.reasons, rationale },
   });
+  announce(action); // live timeline
   return action;
 }
 
@@ -161,6 +170,7 @@ export function decideAction(personaId: string, actionId: string, body: ActionDe
       summary: `Rejected: ${action.summary}.`,
       payload: { actionId },
     });
+    announce(action); // live timeline
     return action;
   }
 
@@ -180,6 +190,7 @@ export function decideAction(personaId: string, actionId: string, body: ActionDe
       summary: `Approved but blocked at execution: ${action.summary}.`,
       payload: { actionId, reasons: recheck.reasons },
     });
+    announce(action); // live timeline
     return action;
   }
 
@@ -192,6 +203,7 @@ export function decideAction(personaId: string, actionId: string, body: ActionDe
     summary: `Approved with PIN and executed: ${action.summary}.`,
     payload: { actionId },
   });
+  announce(action); // live timeline
   return action;
 }
 
