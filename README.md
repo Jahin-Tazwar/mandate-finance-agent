@@ -30,7 +30,7 @@ Express serves the API **and** the built website from the same address, so the b
 | Render setting | Value |
 |---|---|
 | Build command | `npm ci --include=dev && npm run build` |
-| Start command | `npm start` |
+| Start command | `node --max-old-space-size=320 --import tsx apps/api/src/index.ts` |
 | Health check path | `/api/health` |
 
 Environment variables on Render (Settings → Environment):
@@ -43,6 +43,8 @@ Environment variables on Render (Settings → Environment):
 | `AUTH_DISABLED` | `true` **only until** the web app has its sign-in screen, then remove it |
 | `ANCHOR_PRIVATE_KEY` | the **test** wallet for on-chain anchoring (create it with `npm run anchor:wallet`, copy the value from your `.env`) |
 | `LLM_ALLOW_PROVIDER_TRAINING` | `true` only while using free models in development. **Before the demo:** remove it and switch to paid models (free providers may keep prompts) |
+
+**Why not `npm start` on Render:** `npm start` keeps extra npm processes running (measured: 4 Node processes, about 300 MB at idle, against the free plan's 512 MB; on Oct 17 the server ran out of memory). Running Node directly is one process, about 135 MB. `--max-old-space-size=320` makes Node clean up its memory well before the 512 MB limit.
 
 `npm run build` puts the website in `apps/web/dist/`. When that folder exists, the API serves it: real files (scripts, styles) directly, and any other page address (e.g. `/wishes/new`) gets `index.html` so React picks the screen. Unknown `/api/...` addresses still get a JSON 404. Locally, `npm run build && npm start` runs it the same way at http://localhost:4000.
 

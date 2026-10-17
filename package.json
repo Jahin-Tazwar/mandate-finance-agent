@@ -11,7 +11,7 @@
     "dev:api": "npm run dev -w @mandate/api",
     "dev:web": "npm run dev -w @mandate/web",
     "build": "npm run build -w @mandate/web",
-    "start": "npm start -w @mandate/api",
+    "start": "node --max-old-space-size=320 --import tsx apps/api/src/index.ts",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "seed:placeholder": "npm run seed:placeholder -w @mandate/api --",
