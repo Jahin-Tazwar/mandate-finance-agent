@@ -1,0 +1,16 @@
+[
+  {
+    "personaId": "aisha",
+    "eventType": "signed_in",
+    "actor": {
+      "type": "user",
+      "personaId": "aisha"
+    },
+    "summary": "Signed in.",
+    "payload": {},
+    "seq": 19,
+    "ts": "2026-10-17T15:10:01.241Z",
+    "prevHash": "1cad41e1124c6906add5115dba58cbccb1cb80744c9d9fcec97e2f0feeb0433e",
+    "hash": "66864ecab63947d1f9bd666f6cdb0db5d7a788721e1cbcc6b06b27c5edc5cd24"
+  }
+]

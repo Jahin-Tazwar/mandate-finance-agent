@@ -149,6 +149,12 @@ describe("agent loop", () => {
     expect(JSON.stringify(log.body[0])).not.toMatch(/maya\.chen/); // the log never stores what the user wrote
   });
 
+  it("is told not to swap a look-alike payee for a known one (seen in a real run: C1tyPower → CityPower)", async () => {
+    const seen = scriptedModel(["Which one do you mean?"]);
+    await chat("daniel", "Pay C1tyPower $50");
+    expect(seen[0]![0]!.content).toMatch(/Use payee names exactly as the user wrote them/);
+  });
+
   it("introduces itself as MoneyWise", async () => {
     const seen = scriptedModel(["Hi."]);
     await chat("maya", "Who are you?");

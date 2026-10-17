@@ -15,7 +15,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "seed:placeholder": "npm run seed:placeholder -w @mandate/api --",
-    "anchor:wallet": "npm run anchor:wallet -w @mandate/api"
+    "anchor:wallet": "npm run anchor:wallet -w @mandate/api",
+    "evidence": "npm run evidence -w @mandate/api --"
   },
   "devDependencies": {
     "concurrently": "^9.2.0"

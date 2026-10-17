@@ -597,7 +597,7 @@ mandate/
 | 03 | Demo video (≤ 5 min, optional but do it) | Screen recording of the demo script | **P4** | F, P2 |
 | 04 | Source code + README + GitHub link + deploy instructions + test cases | Repo | **T** | F (frontend README section) |
 | 05 | Security self-assessment (permission-tier implementation + known-risk list) | `docs/SECURITY_SELF_ASSESSMENT.md` | **P3** | T (technical review) |
-| 06 | Execution evidence (sandbox operation logs + demo video; tx hashes for bonus) | `docs/evidence/` | **T** | P2 (scenario pass/fail), P3 (red-team results) |
+| 06 | Execution evidence (sandbox operation logs + demo video; tx hashes for bonus): `npm run evidence` runs the demo story and the attack list against a running server with the real AI and writes `docs/evidence/<date>/report.md` (+ raw JSON and each persona's audit log) | `docs/evidence/` | **T** | P2 (scenario pass/fail), P3 (red-team results) |
 
 ---
 

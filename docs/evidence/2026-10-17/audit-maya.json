@@ -1,0 +1,36 @@
+[
+  {
+    "personaId": "maya",
+    "eventType": "agent_chat",
+    "actor": {
+      "type": "agent",
+      "personaId": "maya"
+    },
+    "summary": "Chat reply; 2 item(s) of personal data redacted.",
+    "payload": {
+      "model": "",
+      "tools": [],
+      "actionIds": [],
+      "redactions": 2,
+      "messageLength": 86
+    },
+    "seq": 17,
+    "ts": "2026-10-17T15:10:00.969Z",
+    "prevHash": "b974fb3925e4fbfefdc38e1bf366044468ffffd11d1265f6e8807eda54374fd4",
+    "hash": "0c180bd2ba658f922fab764ae455d96ab1573a886d1571854c81c55bb4d6c25a"
+  },
+  {
+    "personaId": "maya",
+    "eventType": "signed_in",
+    "actor": {
+      "type": "user",
+      "personaId": "maya"
+    },
+    "summary": "Signed in.",
+    "payload": {},
+    "seq": 16,
+    "ts": "2026-10-17T15:10:00.868Z",
+    "prevHash": "2beee53d28fb0660feebeebb58149224da9792870a2deba71fccac2ddd5f7acf",
+    "hash": "b974fb3925e4fbfefdc38e1bf366044468ffffd11d1265f6e8807eda54374fd4"
+  }
+]

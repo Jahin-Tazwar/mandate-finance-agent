@@ -1,0 +1,348 @@
+[
+  {
+    "personaId": "daniel",
+    "eventType": "agent_chat",
+    "actor": {
+      "type": "agent",
+      "personaId": "daniel"
+    },
+    "summary": "Chat reply.",
+    "payload": {
+      "model": "",
+      "tools": [],
+      "actionIds": [],
+      "redactions": 0,
+      "messageLength": 82
+    },
+    "seq": 18,
+    "ts": "2026-10-17T15:10:01.088Z",
+    "prevHash": "0c180bd2ba658f922fab764ae455d96ab1573a886d1571854c81c55bb4d6c25a",
+    "hash": "1cad41e1124c6906add5115dba58cbccb1cb80744c9d9fcec97e2f0feeb0433e"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "agent_started",
+    "actor": {
+      "type": "user",
+      "personaId": "daniel"
+    },
+    "summary": "Kill switch OFF (PIN confirmed): the agent may act within the rules.",
+    "payload": {},
+    "seq": 15,
+    "ts": "2026-10-17T15:10:00.788Z",
+    "prevHash": "05bb1e6be373954e8bf1222c223e44f1aee03b9fddd06ed1b5688540ef46d4c8",
+    "hash": "2beee53d28fb0660feebeebb58149224da9792870a2deba71fccac2ddd5f7acf"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "payday_run",
+    "actor": {
+      "type": "agent",
+      "personaId": "daniel"
+    },
+    "summary": "Payday run: no new pay; 1 action(s): 0 done, 0 waiting, 1 blocked.",
+    "payload": {
+      "paycheckId": null,
+      "actionIds": [
+        "act_7"
+      ]
+    },
+    "seq": 14,
+    "ts": "2026-10-17T15:10:00.702Z",
+    "prevHash": "3d95c009adc07ffd01a80d14e23d011ae876a6e53ebc9c05be6766300aae5b36",
+    "hash": "05bb1e6be373954e8bf1222c223e44f1aee03b9fddd06ed1b5688540ef46d4c8"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "action_denied",
+    "actor": {
+      "type": "agent",
+      "personaId": "daniel"
+    },
+    "summary": "Blocked: Pay Harbor View Apartments $1,450 (source: agent).",
+    "payload": {
+      "actionId": "act_7",
+      "action": {
+        "source": "agent",
+        "type": "payment",
+        "payee": "Harbor View Apartments",
+        "amountCents": 145000,
+        "fromAccount": "checking",
+        "billId": "bill_daniel_harbor-view-apartments_20261101"
+      },
+      "decision": "deny",
+      "tier": "L0",
+      "reasons": [
+        "The agent is switched off, so it can only watch. Turn it back on to let it act."
+      ],
+      "rationale": "Payday: the Harbor View Apartments bill ($1,450) is due Nov 1."
+    },
+    "seq": 13,
+    "ts": "2026-10-17T15:10:00.698Z",
+    "prevHash": "6b792dcc60830503c1743861c323d822d308af93b0a0758949eec5f0ed70ad52",
+    "hash": "3d95c009adc07ffd01a80d14e23d011ae876a6e53ebc9c05be6766300aae5b36"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "agent_chat",
+    "actor": {
+      "type": "agent",
+      "personaId": "daniel"
+    },
+    "summary": "Chat reply using get_bills.",
+    "payload": {
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "tools": [
+        "get_bills"
+      ],
+      "actionIds": [],
+      "redactions": 0,
+      "messageLength": 18
+    },
+    "seq": 12,
+    "ts": "2026-10-17T15:10:00.678Z",
+    "prevHash": "bc499ecd69af40f0bf5a294ba38062a51ff835b5db45a1ff13e2653f68c9f93d",
+    "hash": "6b792dcc60830503c1743861c323d822d308af93b0a0758949eec5f0ed70ad52"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "agent_stopped",
+    "actor": {
+      "type": "user",
+      "personaId": "daniel"
+    },
+    "summary": "Kill switch ON: the agent can only watch.",
+    "payload": {},
+    "seq": 11,
+    "ts": "2026-10-17T15:09:58.127Z",
+    "prevHash": "4862445c52f3483ef9c1e58c1ba41b81ac42094a8f202b1dd5a8fe8daebf136c",
+    "hash": "bc499ecd69af40f0bf5a294ba38062a51ff835b5db45a1ff13e2653f68c9f93d"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "action_approved",
+    "actor": {
+      "type": "user",
+      "personaId": "daniel"
+    },
+    "summary": "Approved with PIN and executed: Pay CityPower $132.80.",
+    "payload": {
+      "actionId": "act_1"
+    },
+    "seq": 10,
+    "ts": "2026-10-17T15:09:58.119Z",
+    "prevHash": "aa16d889494982b9917f55a3762636105ca245ab17aef5b8b655d7203bb15ca8",
+    "hash": "4862445c52f3483ef9c1e58c1ba41b81ac42094a8f202b1dd5a8fe8daebf136c"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "payday_run",
+    "actor": {
+      "type": "agent",
+      "personaId": "daniel"
+    },
+    "summary": "Payday run: pay landed (+$4,200); 6 action(s): 3 done, 3 waiting, 0 blocked.",
+    "payload": {
+      "paycheckId": "tx_daniel_new_1",
+      "actionIds": [
+        "act_1",
+        "act_2",
+        "act_3",
+        "act_4",
+        "act_5",
+        "act_6"
+      ]
+    },
+    "seq": 9,
+    "ts": "2026-10-17T15:09:58.070Z",
+    "prevHash": "4111de1130d18000ced2c907003445a587b1a6ccd1cc23746ea33e672ec82129",
+    "hash": "aa16d889494982b9917f55a3762636105ca245ab17aef5b8b655d7203bb15ca8"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "action_pending_approval",
+    "actor": {
+      "type": "agent",
+      "personaId": "daniel"
+    },
+    "summary": "Waiting for approval: Dispute TechStore charge of $129.99 on Sep 14 (source: agent).",
+    "payload": {
+      "actionId": "act_6",
+      "action": {
+        "source": "agent",
+        "type": "dispute",
+        "transactionId": "tx_daniel_0205"
+      },
+      "decision": "require_approval",
+      "tier": "L2",
+      "reasons": [
+        "Disputing a charge happens only with your approval (your default rule)."
+      ],
+      "rationale": "TechStore charged $129.99 twice on Sep 14."
+    },
+    "seq": 8,
+    "ts": "2026-10-17T15:09:58.070Z",
+    "prevHash": "f4609452280b4c9d2bf0e40c758888dac12c9453a3d315e6e1d209da29603b3f",
+    "hash": "4111de1130d18000ced2c907003445a587b1a6ccd1cc23746ea33e672ec82129"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "action_pending_approval",
+    "actor": {
+      "type": "agent",
+      "personaId": "daniel"
+    },
+    "summary": "Waiting for approval: Cancel FitZone Premium (source: agent).",
+    "payload": {
+      "actionId": "act_5",
+      "action": {
+        "source": "agent",
+        "type": "cancel_subscription",
+        "subscriptionId": "sub_daniel_fitzone-premium",
+        "merchant": "FitZone Premium"
+      },
+      "decision": "require_approval",
+      "tier": "L2",
+      "reasons": [
+        "Cancelling FitZone Premium happens only with your approval (your default rule)."
+      ],
+      "rationale": "FitZone Premium costs $49.99 a month and hasn't been used for 74 days."
+    },
+    "seq": 7,
+    "ts": "2026-10-17T15:09:58.069Z",
+    "prevHash": "3d969998b978ea068d8e0d17b2e00896d0a272c7c19837f03a20b9a18dc3d5b9",
+    "hash": "f4609452280b4c9d2bf0e40c758888dac12c9453a3d315e6e1d209da29603b3f"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "action_executed",
+    "actor": {
+      "type": "agent",
+      "personaId": "daniel"
+    },
+    "summary": "Executed: Save $270.84 for Car down payment (source: agent).",
+    "payload": {
+      "actionId": "act_4",
+      "action": {
+        "source": "agent",
+        "type": "wish_contribution",
+        "wishId": "wish_daniel_1",
+        "amountCents": 27084
+      },
+      "decision": "allow",
+      "tier": "L3",
+      "reasons": [
+        "Wish savings up to $600 per payday are allowed automatically."
+      ],
+      "rationale": "Payday: your plan saves $270.84 for Car down payment each payday."
+    },
+    "seq": 6,
+    "ts": "2026-10-17T15:09:58.067Z",
+    "prevHash": "6cd7b53d9dd8657e3a419137a5ed54570b64d2e1479a8bd101c451018b212425",
+    "hash": "3d969998b978ea068d8e0d17b2e00896d0a272c7c19837f03a20b9a18dc3d5b9"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "action_executed",
+    "actor": {
+      "type": "agent",
+      "personaId": "daniel"
+    },
+    "summary": "Executed: Pay FiberNet $60 (source: agent).",
+    "payload": {
+      "actionId": "act_3",
+      "action": {
+        "source": "agent",
+        "type": "payment",
+        "payee": "FiberNet",
+        "amountCents": 6000,
+        "fromAccount": "checking",
+        "billId": "bill_daniel_fibernet_20261020"
+      },
+      "decision": "allow",
+      "tier": "L3",
+      "reasons": [
+        "Payments up to $100 to payees you've paid before are automatic."
+      ],
+      "rationale": "Payday: the FiberNet bill ($60) is due Oct 20."
+    },
+    "seq": 5,
+    "ts": "2026-10-17T15:09:58.066Z",
+    "prevHash": "292eeff16f7085627338a403158b55613ceb958031960f8f538822d4685db2b2",
+    "hash": "6cd7b53d9dd8657e3a419137a5ed54570b64d2e1479a8bd101c451018b212425"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "action_executed",
+    "actor": {
+      "type": "agent",
+      "personaId": "daniel"
+    },
+    "summary": "Executed: Pay Mobi Telecom $55 (source: agent).",
+    "payload": {
+      "actionId": "act_2",
+      "action": {
+        "source": "agent",
+        "type": "payment",
+        "payee": "Mobi Telecom",
+        "amountCents": 5500,
+        "fromAccount": "checking",
+        "billId": "bill_daniel_mobi-telecom_20261018"
+      },
+      "decision": "allow",
+      "tier": "L3",
+      "reasons": [
+        "Payments up to $100 to payees you've paid before are automatic."
+      ],
+      "rationale": "Payday: the Mobi Telecom bill ($55) is due Oct 18."
+    },
+    "seq": 4,
+    "ts": "2026-10-17T15:09:58.064Z",
+    "prevHash": "20a54b1ef6c8c1f722380cea3213fbc88f51c3c6cd2418498e414902837012a1",
+    "hash": "292eeff16f7085627338a403158b55613ceb958031960f8f538822d4685db2b2"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "action_pending_approval",
+    "actor": {
+      "type": "agent",
+      "personaId": "daniel"
+    },
+    "summary": "Waiting for approval: Pay CityPower $132.80 (source: agent).",
+    "payload": {
+      "actionId": "act_1",
+      "action": {
+        "source": "agent",
+        "type": "payment",
+        "payee": "CityPower",
+        "amountCents": 13280,
+        "fromAccount": "checking",
+        "billId": "bill_daniel_citypower_20261015"
+      },
+      "decision": "require_approval",
+      "tier": "L2",
+      "reasons": [
+        "$132.80 is over your $100 limit per payment."
+      ],
+      "rationale": "Payday: the CityPower bill ($132.80) is due Oct 15."
+    },
+    "seq": 3,
+    "ts": "2026-10-17T15:09:58.060Z",
+    "prevHash": "a0f6b888c9e0b2e62c853bf33dd34a1d98cf7639fa545c9d7062b56e31497785",
+    "hash": "20a54b1ef6c8c1f722380cea3213fbc88f51c3c6cd2418498e414902837012a1"
+  },
+  {
+    "personaId": "daniel",
+    "eventType": "signed_in",
+    "actor": {
+      "type": "user",
+      "personaId": "daniel"
+    },
+    "summary": "Signed in.",
+    "payload": {},
+    "seq": 2,
+    "ts": "2026-10-17T15:09:58.051Z",
+    "prevHash": "1b09056a6897825784b0b16c5953d0e72fc1392243f386eea766354cbb7423e6",
+    "hash": "a0f6b888c9e0b2e62c853bf33dd34a1d98cf7639fa545c9d7062b56e31497785"
+  }
+]

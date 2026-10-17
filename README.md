@@ -63,6 +63,7 @@ docs/            API contract, team guide, learning notes, (later) architecture 
 |---|---|
 | `npm run dev` | Start API and web app together |
 | `npm run dev:api` / `npm run dev:web` | Start one of them |
+| `npm run evidence` | Run the demo story + attack list against a running server (default `http://localhost:4000`, or pass a URL after `--`); writes `docs/evidence/<date>/report.md`. Add `--only A08,A17` to re-run just some attacks (the free AI allows about 50 requests a day) |
 | `npm run anchor:wallet` | Create (or show) the test wallet for on-chain anchoring and its test ETH balance |
 | `npm run build` / `npm start` | Build the website, then run API + website on one port (what Render does) |
 | `npm test` | Run the automated tests |
