@@ -1,13 +1,13 @@
 # MoneyWise: Presentation Guide
 
 > **For:** the Presentation Lead. **From:** the Tech Lead. **Date:** Sat Oct 17.
-> Built on **your** *Working principle* outline. Your 12-slide order is kept exactly; this guide fills each slide with what we actually built, with real numbers.
+> Built on **your** *Working principle* outline, in the order the team agreed on Oct 17: **problem first** (Rafsan's suggestion), then the solution, then MoneyWise is revealed. This guide fills each slide with what we actually built, with real numbers.
 
 ---
 
 ## 1. How to use this guide
 
-- **12 slides, 10 minutes.** The plan below adds up to **9 min 40 s**, leaving 20 seconds of buffer.
+- **11 slides, 10 minutes.** The plan below adds up to **9 min 20 s**, leaving 40 seconds of buffer. Your 12 topics are all still here: see section 4 for the two changes and how to undo them.
 - For each slide you get: **the one message** to land, **3–5 points**, **what to show**, **speaker notes** (say them in your own words), **time**, and a **status label**:
   - **Implemented** = built, running, and covered by automated tests.
   - **Proposed** = future work. Never present it as done.
@@ -22,35 +22,24 @@ The judges score: **task completion 40%, security & compliance 30%, innovation &
 
 | # | Slide | Time | Mainly scores |
 |---|---|---|---|
-| 1 | Title & Vision | 0:25 | (first impression) |
-| 2 | Problem Statement | 0:40 | Task completion |
-| 3 | **Proposed Solution** | **1:10** | Innovation, Security |
+| 1 | Problem Statement | 0:45 | (hook) Task completion |
+| 2 | **Proposed Solution** | **1:10** | Innovation, Security |
+| 3 | Title & Vision (the reveal) | 0:20 | (first impression) |
 | 4 | Product Walkthrough | 0:45 | Task completion, Interaction |
 | 5 | **Goal Achievement** | **1:10** | Task completion, Innovation |
 | 6 | **AI Agent Workflow** | **1:15** | Innovation, Security |
-| 7 | System Architecture | 0:40 | Task completion |
-| 8 | Core Algorithms | 0:45 | Task completion |
-| 9 | Database & API | 0:30 | Task completion |
-| 10 | **Security & Privacy** | **1:20** | Security, on-chain bonus |
-| 11 | Testing & Evaluation | 0:30 | Task completion, Security |
-| 12 | Impact & Roadmap | 0:30 | (closing) |
-| | **Total** | **9:40** | |
+| 7 | **Security & Privacy** | **1:20** | Security, on-chain bonus |
+| 8 | System Architecture, Database & API | 0:50 | Task completion |
+| 9 | Core Algorithms | 0:45 | Task completion |
+| 10 | Testing & Evaluation | 0:30 | Task completion, Security |
+| 11 | Impact & Roadmap | 0:30 | (closing) |
+| | **Total** | **9:20** | |
 
 ---
 
 ## 3. The slides
 
-### Slide 1: Title & Vision · 0:25 · Implemented
-**Message:** *MoneyWise manages your money for you, but only inside rules you sign.*
-
-- Name, team, "2026 FinTechathon · Topic A: Personal Finance Assistant".
-- One line: *an AI personal finance agent that pays bills, saves for your goals and spots waste, and can never break the rules you set.*
-- Tagline: **"The AI suggests. Your rules decide."**
-
-**Show:** title slide with the tagline.
-**Say:** "Most finance apps tell you what to do. MoneyWise does it, but only inside rules you sign." (The video opens with the same line.)
-
-### Slide 2: Problem Statement · 0:40 · Illustrative (demo personas)
+### Slide 1: Problem Statement · 0:45 · Illustrative (demo personas)
 **Message:** *Money needs many small decisions every week, and handing them to an AI feels unsafe.*
 
 - Bills and subscriptions slip through: in our demo data, Maya has paid **$29.99 a month** for a gym she hasn't used in **163 days**.
@@ -59,9 +48,10 @@ The judges score: **task completion 40%, security & compliance 30%, innovation &
 - Our users: **Maya** (student, weekly pay), **Daniel** (young professional, monthly salary), **Aisha** (gig worker, daily payouts).
 
 **Show:** the three personas with one pain point each.
+**Say (opening line, no introduction first):** "Maya has paid $29.99 a month for a gym she hasn't used in 163 days. Nobody told her, and no app did anything about it." Then the other points. Don't say the product name yet: it's revealed on slide 3.
 **Note:** the personas and their numbers are **synthetic demo data**; say so if asked. If you want real-world statistics, cite a source on the slide. Don't use a number you can't source.
 
-### Slide 3: Proposed Solution · 1:10 · Implemented
+### Slide 2: Proposed Solution · 1:10 · Implemented
 **Message:** *The AI only suggests. Rules the user signs, enforced by plain code, decide: allow, ask with PIN, or block.*
 
 - The user writes rules in plain English, e.g. *"Never let my checking go below $200. Ask me before any payment over $100 or to anyone new."* Plain code (not the AI) turns them into rules; the user **signs with a PIN**.
@@ -73,7 +63,18 @@ The judges score: **task completion 40%, security & compliance 30%, innovation &
 - The agent does the work: pays bills, saves for wishes, flags unused subscriptions and duplicate charges.
 
 **Show:** a three-column graphic **Allow / Ask / Block**, with the three real examples.
-**Say:** "This is our key difference. Other assistants trust the AI. We don't have to: the AI can only propose, and code the user controls makes the call."
+**Say:** "This is our key difference. Other assistants trust the AI. We don't have to: the AI can only propose, and code the user controls makes the call." (Describe it as "an assistant"; the name comes on the next slide.)
+
+### Slide 3: Title & Vision · 0:20 · Implemented
+**Message (the reveal):** *That assistant is MoneyWise: it manages your money for you, but only inside rules you sign.*
+
+- Name, team, "2026 FinTechathon · Topic A: Personal Finance Assistant".
+- One line: *an AI personal finance agent that pays bills, saves for your goals and spots waste, and can never break the rules you set.*
+- Tagline: **"The AI suggests. Your rules decide."**
+
+**Show:** the name, the tagline and the team.
+**Say:** "This is MoneyWise. Most finance apps tell you what to do. MoneyWise does it, but only inside rules you sign."
+**Cover slide:** if the deck needs one before slide 1, show only the name and team while you're introduced, and don't talk over it. The vision lands here, after the problem and the solution.
 
 ### Slide 4: Product Walkthrough · 0:45 · Implemented
 **Message:** *One look tells Maya what she can safely spend today.*
@@ -123,7 +124,22 @@ flowchart LR
 **Show:** the diagram, then the Activity timeline after Run payday.
 **Note:** the AI's wording changes a little each run; the **numbers don't**, because they come from the tools, not the AI.
 
-### Slide 7: System Architecture · 0:40 · Implemented (data layer: demo)
+### Slide 7: Security & Privacy · 1:20 · Implemented unless marked
+**Message:** *Safety doesn't depend on the AI behaving. It's enforced by code, proven by tests, and checkable by anyone.*
+
+- **Permission tiers:** L0 watch only · L1 suggest · L2 act with approval · L3 act alone within the rules. Default: **"ask me first"** (L2).
+- **Rules signed with a PIN**, turned into rules by plain code, so the AI can't rewrite them.
+- **Sign-in and account isolation:** signed in as Maya, changing "maya" to "daniel" in a link → *"That isn't your account."* **PIN** for approvals; **5 wrong tries → locked for 5 minutes**.
+- **Prompt injection blocked live:** Maya's phone bill with hidden white text → two red warnings, the $35 bill waits for approval, the $500 is **blocked**: *"Documents can't add new payees."*
+- **Privacy:** card numbers, emails and phone numbers are removed before anything reaches the AI; the AI provider is set to one that doesn't keep our data (see section 4 for the development exception).
+- **Tamper-evident audit log**, and its fingerprint published on a **public test blockchain** (Implemented on a test network; show the explorer link only once the test wallet is funded).
+- HTTPS; passwords and PINs stored only as salted hashes; secrets only on the server.
+- **Proposed:** encryption of stored data (with the real database), two-factor login.
+
+**Show:** the red warning banner from the bill upload, and the audit log's "Verified" badge.
+**Why it comes this early:** security is 30% of the score, and the blocked bill is our most memorable moment. It lands best straight after slide 6, while the judges have just watched the agent act.
+
+### Slide 8: System Architecture, Database & API · 0:50 · Implemented (data layer: demo)
 **Message:** *Clear parts, each with one job, and the money path never goes through the AI alone.*
 
 ```mermaid
@@ -143,10 +159,14 @@ flowchart TB
 
 - React frontend (Rafsan) · Express API (TypeScript) · AI agent (OpenRouter, tool calling) · **policy engine** · executor · analytics + wish planner · bill reader · rule compiler · audit log + blockchain anchor.
 - One server serves both the website and the API.
+- **Data & API** (one honest line on the slide):
+  - **Implemented:** demo data for 3 people (**757 transactions**, synthetic) in CSV files, checked row by row and loaded into memory; every data shape checked with Zod and shared by frontend and backend; a documented REST API, plus live streams for chat and the activity feed.
+  - **Proposed:** a real database (e.g. PostgreSQL) and real bank connections (Open Banking APIs).
+  - Demo data resets when the server restarts. That's on purpose, so every demo starts the same.
 
 **Note:** there's no separate "intent detection" part: the model chooses tools itself, and plain code decides what may happen.
 
-### Slide 8: Core Algorithms · 0:45 · Implemented
+### Slide 9: Core Algorithms · 0:45 · Implemented
 **Message:** *All money maths is plain code, so it's exact and explainable.*
 
 - **Safe to spend:** look 30 days ahead using only money you can count on (pay, rent, bills, subscriptions). Safe-to-spend is the most you can spend per day so that **no future day drops below the $200 minimum**. Maya: **$34.45 a day**.
@@ -156,29 +176,7 @@ flowchart TB
 
 **Show:** the four ideas as simple one-line formulas.
 
-### Slide 9: Database & API · 0:30
-**Message:** *Simple, checked data now; real bank connections next.*
-
-- **Implemented:** demo data for 3 people (**757 transactions**, synthetic) in CSV files, checked row by row and loaded into memory; every data shape checked with Zod and shared by frontend and backend; a documented REST API, plus live streams for chat and the activity feed.
-- **Proposed:** a real database (e.g. PostgreSQL) and real bank connections (Open Banking APIs).
-
-**Note:** demo data resets when the server restarts. That's on purpose, so every demo starts the same.
-
-### Slide 10: Security & Privacy · 1:20 · Implemented unless marked
-**Message:** *Safety doesn't depend on the AI behaving. It's enforced by code, proven by tests, and checkable by anyone.*
-
-- **Permission tiers:** L0 watch only · L1 suggest · L2 act with approval · L3 act alone within the rules. Default: **"ask me first"** (L2).
-- **Rules signed with a PIN**, turned into rules by plain code, so the AI can't rewrite them.
-- **Sign-in and account isolation:** signed in as Maya, changing "maya" to "daniel" in a link → *"That isn't your account."* **PIN** for approvals; **5 wrong tries → locked for 5 minutes**.
-- **Prompt injection blocked live:** Maya's phone bill with hidden white text → two red warnings, the $35 bill waits for approval, the $500 is **blocked**: *"Documents can't add new payees."*
-- **Privacy:** card numbers, emails and phone numbers are removed before anything reaches the AI; the AI provider is set to one that doesn't keep our data (see section 4 for the development exception).
-- **Tamper-evident audit log**, and its fingerprint published on a **public test blockchain** (Implemented on a test network; show the explorer link only once the test wallet is funded).
-- HTTPS; passwords and PINs stored only as salted hashes; secrets only on the server.
-- **Proposed:** encryption of stored data (with the real database), two-factor login.
-
-**Show:** the red warning banner from the bill upload, and the audit log's "Verified" badge.
-
-### Slide 11: Testing & Evaluation · 0:30 · Measured results only
+### Slide 10: Testing & Evaluation · 0:30 · Measured results only
 **Message:** *We measured it.*
 
 - **190 automated tests pass**, including **12 red-team tests** (hidden instructions in bills, look-alike company names, splitting payments, a fooled AI, "admin mode" tricks).
@@ -189,7 +187,7 @@ flowchart TB
 
 **Show:** the test summary ("190 passed").
 
-### Slide 12: Impact & Roadmap · 0:30
+### Slide 11: Impact & Roadmap · 0:30
 **Message:** *Everyday people get an assistant that acts for them, safely.*
 
 - **Maya:** knows she can spend **$34.45** today; iPhone by **Apr 9, 2027**; an unused gym flagged.
@@ -203,7 +201,14 @@ flowchart TB
 
 ## 4. Notes on the working-principle outline
 
-Your outline is a strong base: the 12-slide order is yours and stays. A few updates so the slides match what we built:
+Your outline is a strong base. **The order was updated on Oct 17:**
+- **Problem first** (Rafsan's suggestion, agreed by the team): Problem → Solution → Title & Vision (the reveal) → Walkthrough → Goal Achievement.
+- **Two more changes from the Tech Lead, yours to undo:**
+  - **Security moved from slide 10 to 7.** It's 30% of the score, and the blocked bill is our strongest moment; it lands best straight after the agent in action, while the judges are still fresh.
+  - **Database & API folded into System Architecture.** 30 seconds on data structures scores little; the honest data line is kept on slide 8, and the 20 seconds saved go to buffer.
+  - If you prefer your original order for these, just move the slides: each slide's text works on its own.
+
+A few updates so the slides match what we built:
 
 1. **Name:** settled as **MoneyWise**. (The rules a user signs are still called their "mandate" inside the app. If anyone sees that word, it's the feature, not the product.)
 2. **Savings are planned per payday, not only per month.** Use: per payday = (target − saved) ÷ paydays left. Please use **Maya's iPhone** ($1,200 → $40.39 every Friday) instead of the ৳80,000 laptop, so the slides match the live demo and the video.
@@ -221,15 +226,17 @@ The video (≤ 5 min) follows the demo script in `PRODUCT.md` §16. The deck and
 
 | Video step | Deck slide |
 |---|---|
-| Hook: "MoneyWise does it, but only inside rules you sign" | 1 |
-| Maya's dashboard: $34.45 safe to spend, unused gym | 4 |
+| Hook: "MoneyWise does it, but only inside rules you sign" | 3 |
+| Maya's dashboard: $34.45 safe to spend, unused gym | 1, 4 |
 | Wishes: iPhone $40.39 every Friday, tight | 5 |
-| Rules in plain English; AI help suggests a "$0 minimum", the warning flags it, she doesn't use it; signs with PIN | 3, 10 |
+| Rules in plain English; AI help suggests a "$0 minimum", the warning flags it, she doesn't use it; signs with PIN | 2, 7 |
 | Chat: "$60 concert?" → $34.45 today, iPhone 11 days later | 6 |
 | Run payday: bill paid, $40.39 saved, gym waits for PIN | 6 |
-| Poisoned phone bill → red banner, $500 blocked | 10 |
-| Audit log verified + blockchain link | 10 |
-| Close: tiers + kill switch | 10, 12 |
+| Poisoned phone bill → red banner, $500 blocked | 7 |
+| Audit log verified + blockchain link | 7 |
+| Close: tiers + kill switch | 7, 11 |
+
+**Opening:** the deck now opens with the problem. The video can do the same (start on Maya's unused gym, then the hook line). If you change the video's opening, tell the Tech Lead so the demo script in `PRODUCT.md` §16 is updated to match.
 
 **Live-demo warning:** a multi-step AI answer took **55 seconds** on the free model. For the video, record the chat in advance (or with the paid model) and cut the waiting.
 
@@ -262,8 +269,8 @@ The video (≤ 5 min) follows the demo script in `PRODUCT.md` §16. The deck and
 ## 7. Checklist
 
 - [ ] Read this guide; ask the Tech Lead about anything unclear (judges will ask you too)
-- [ ] Slides 1–12 drafted with these numbers (**Sat Oct 17**)
+- [ ] Slides 1–11 drafted with these numbers (**Sat Oct 17**)
 - [ ] Screenshots from Rafsan's app (**Sun Oct 18**); API screenshots for any screen not ready
-- [ ] Add the security lead's PASS / FAIL count to slide 11 (**Sun Oct 18**)
-- [ ] Rehearse to **9:40** twice; cut words, not slides
+- [ ] Add the security lead's PASS / FAIL count to slide 10 (**Sun Oct 18**)
+- [ ] Rehearse to **9:20** twice; cut words, not slides
 - [ ] Video recorded from the demo script, matching the deck (**Mon Oct 19**)
