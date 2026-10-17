@@ -149,6 +149,12 @@ describe("agent loop", () => {
     expect(JSON.stringify(log.body[0])).not.toMatch(/maya\.chen/); // the log never stores what the user wrote
   });
 
+  it("introduces itself as MoneyWise", async () => {
+    const seen = scriptedModel(["Hi."]);
+    await chat("maya", "Who are you?");
+    expect(seen[0]![0]!.content).toMatch(/^You are MoneyWise, a personal finance assistant for Maya\./);
+  });
+
   it("remembers the conversation for the next message", async () => {
     scriptedModel(["First answer."]);
     await chat("maya", "Hello");

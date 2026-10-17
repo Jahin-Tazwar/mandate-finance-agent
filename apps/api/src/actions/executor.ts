@@ -16,7 +16,7 @@ export function execute(personaId: string, action: ProposedAction, actionId: str
         merchant: action.payee,
         description: action.billId ? `Bill payment (${action.billId})` : "Payment",
         category: categoryFor(personaId, action.payee),
-        memo: `Mandate ${actionId}`,
+        memo: `MoneyWise ${actionId}`,
       });
       return;
 
@@ -47,7 +47,7 @@ export function execute(personaId: string, action: ProposedAction, actionId: str
 
 /** Two transactions: money out of one account, into the other (both filed as "transfer"). */
 function moveBetween(personaId: string, from: "checking" | "savings" | "credit", to: "checking" | "savings" | "credit", cents: number, description: string, actionId: string) {
-  const memo = `Mandate ${actionId}`;
+  const memo = `MoneyWise ${actionId}`;
   postTransaction(personaId, { account: from, amountCents: -cents, merchant: "Own accounts", description, category: "transfer", memo });
   postTransaction(personaId, { account: to, amountCents: cents, merchant: "Own accounts", description, category: "transfer", memo });
 }

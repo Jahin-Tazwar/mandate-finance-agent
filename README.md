@@ -1,4 +1,4 @@
-# Mandate
+# MoneyWise
 
 A personal finance agent that manages your money inside rules you sign.
 Built for the 2026 FinTechathon (WeBank), International Track, Topic A.

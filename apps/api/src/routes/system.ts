@@ -10,13 +10,13 @@ export const systemRoutes = Router();
 // "Is the server alive?" Also answers HEAD (Express does that for every GET route),
 // which is what the keep-alive pinger uses.
 systemRoutes.get("/health", (_req, res) => {
-  res.json({ ok: true, service: "mandate-api", time: new Date().toISOString() });
+  res.json({ ok: true, service: "moneywise-api", time: new Date().toISOString() });
 });
 
 // Explicit HEAD handler. Optional: the GET route above is registered first and already
 // answers HEAD requests, so in practice this one never runs.
 systemRoutes.head("/health", (_req, res) => {
-  res.json({ ok: true, service: "mandate-api", time: new Date().toISOString() });
+  res.json({ ok: true, service: "moneywise-api", time: new Date().toISOString() });
 });
 
 // Proves the shared package works: this list comes from packages/shared.

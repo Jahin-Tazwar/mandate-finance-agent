@@ -14,7 +14,8 @@ beforeEach(() => {
 
 describe("system", () => {
   it("GET and HEAD /api/health both answer 200 (HEAD is what the keep-alive pinger sends)", async () => {
-    await request(app).get("/api/health").expect(200);
+    const res = await request(app).get("/api/health").expect(200);
+    expect(res.body.service).toBe("moneywise-api");
     await request(app).head("/api/health").expect(200);
   });
 

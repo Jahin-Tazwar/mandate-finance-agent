@@ -13,7 +13,7 @@ import { HttpError } from "../http/errors";
  * hash stands for the whole history up to that point.
  *
  * Anyone can check it: open the transaction on the explorer, read the text
- *   mandate-audit:v1:42:5be1…   (entry #42, its hash)
+ *   moneywise-audit:v1:42:5be1…   (entry #42, its hash)
  * and compare it with entry #42 of the log.
  */
 
@@ -37,8 +37,8 @@ const CHAINS = {
 /** At most one anchor a minute (each one is a transaction). */
 const MIN_GAP_MS = 60_000;
 
-/** The text written on-chain, e.g. "mandate-audit:v1:42:5be1…". */
-const payloadFor = (seq: number, hash: string) => `mandate-audit:v1:${seq}:${hash}`;
+/** The text written on-chain, e.g. "moneywise-audit:v1:42:5be1…". */
+const payloadFor = (seq: number, hash: string) => `moneywise-audit:v1:${seq}:${hash}`;
 
 /** How we talk to the chain: send a payload, read one back. Tests replace it with a fake. */
 export interface ChainClient {
@@ -139,9 +139,9 @@ export async function checkAnchor(txHash: string): Promise<{ txHash: string; onC
   if (!anchoringReady()) throw new HttpError(503, "On-chain anchoring isn't set up");
 
   const data = await client().read(txHash);
-  // e.g. "mandate-audit:v1:42:5be1…" → seq 42, hash "5be1…"
+  // e.g. "moneywise-audit:v1:42:5be1…" → seq 42, hash "5be1…"
   const text = data ? fromHex(data, "string") : "";
-  const match = /^mandate-audit:v1:(\d+):([0-9a-f]{64})$/.exec(text);
+  const match = /^moneywise-audit:v1:(\d+):([0-9a-f]{64})$/.exec(text);
   if (!match) return { txHash, onChain: data !== null, seq: null, hash: null, matchesLog: false };
 
   const seq = Number(match[1]);

@@ -58,7 +58,7 @@ async function askOpenRouter(model: string, messages: ModelMessage[], tools: Too
     headers: {
       Authorization: `Bearer ${config.llm.apiKey}`,
       "Content-Type": "application/json",
-      "X-Title": "Mandate",
+      "X-Title": "MoneyWise",
     },
     body: JSON.stringify({
       model,

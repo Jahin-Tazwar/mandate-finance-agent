@@ -49,7 +49,7 @@ describe("on-chain anchoring", () => {
 
     expect(res.body.anchor).toMatchObject({ seq: head.seq, hash: head.hash, chain: "base-sepolia", txHash: TX(1), explorerUrl: `https://sepolia.basescan.org/tx/${TX(1)}` });
     // What's on the chain: plain text anyone can read on the explorer
-    expect(fromHex(sent.get(TX(1))!, "string")).toBe(`mandate-audit:v1:${head.seq}:${head.hash}`);
+    expect(fromHex(sent.get(TX(1))!, "string")).toBe(`moneywise-audit:v1:${head.seq}:${head.hash}`);
     expect(auditEntries().at(-1)).toMatchObject({ eventType: "audit_anchored", payload: { seq: head.seq, txHash: TX(1) } });
 
     const list = await request(app).get("/api/anchors").expect(200);
@@ -78,7 +78,7 @@ describe("on-chain anchoring", () => {
     expect(ok.body).toEqual({ txHash: TX(1), onChain: true, seq: body.anchor.seq, hash: body.anchor.hash, matchesLog: true });
 
     // A transaction claiming a different fingerprint for the same entry → doesn't match the log
-    sent.set(TX(9), toHex(`mandate-audit:v1:${body.anchor.seq}:${"f".repeat(64)}`));
+    sent.set(TX(9), toHex(`moneywise-audit:v1:${body.anchor.seq}:${"f".repeat(64)}`));
     const bad = await request(app).get(`/api/anchors/${TX(9)}/check`).expect(200);
     expect(bad.body.matchesLog).toBe(false);
 

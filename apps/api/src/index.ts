@@ -34,5 +34,5 @@ if (anchoringReady()) {
 
 // Data is loaded: start answering requests
 createApp().listen(config.port, () => {
-  console.log(`Mandate API listening on http://localhost:${config.port}`);
+  console.log(`MoneyWise API listening on http://localhost:${config.port}`);
 });

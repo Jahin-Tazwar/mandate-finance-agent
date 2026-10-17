@@ -108,6 +108,13 @@ describe("red team: attacks that must fail", () => {
     expect(d.reasons[0]).toMatch(/Documents can't add new payees/);
   });
 
+  it("the document rule is the reason shown, even when a money limit would also block it", () => {
+    // $500 to a stranger from a bill, on a day the agent already moved $450: both rules say no,
+    // and the user should see the one that names the attack
+    const d = evaluate(pay("Account 99-1234", 50_000, "untrusted"), { ...ctx, agentMovedTodayCents: 45_000 });
+    expect(d.reasons[0]).toMatch(/Documents can't add new payees/);
+  });
+
   it("anything from a document needs approval, even a tiny payment to a known payee", () => {
     const d = evaluate(pay("CityPower", 500, "untrusted"), ctx);
     expect(d.decision).toBe("require_approval");

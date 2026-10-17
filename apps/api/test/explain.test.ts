@@ -61,12 +61,12 @@ describe("compile lists what it didn't understand", () => {
 
 describe("POST /api/personas/:id/mandate/explain", () => {
   it("a fixable sentence: the rewrite compiles cleanly and comes with what it means", async () => {
-    fakeModel({ suggestions: [{ rewrite: "Never let my checking go below $100.", explanation: "Mandate needs a number: this keeps at least $100 in checking." }] });
+    fakeModel({ suggestions: [{ rewrite: "Never let my checking go below $100.", explanation: "MoneyWise needs a number: this keeps at least $100 in checking." }] });
     const [s] = await explain(["Don't let me go broke"]);
     expect(s).toEqual({
       original: "Don't let me go broke",
       rewrite: "Never let my checking go below $100.",
-      explanation: "Mandate needs a number: this keeps at least $100 in checking.",
+      explanation: "MoneyWise needs a number: this keeps at least $100 in checking.",
       summary: ["Checking never goes below $100."],
       warnings: [],
     });
@@ -80,9 +80,9 @@ describe("POST /api/personas/:id/mandate/explain", () => {
   });
 
   it("an unsupported rule (a category budget): no rewrite, the explanation says so", async () => {
-    fakeModel({ suggestions: [{ rewrite: null, explanation: "Mandate can't enforce budgets per category yet." }] });
+    fakeModel({ suggestions: [{ rewrite: null, explanation: "MoneyWise can't enforce budgets per category yet." }] });
     const [s] = await explain(["Max $200 a month on dining"]);
-    expect(s).toEqual({ original: "Max $200 a month on dining", rewrite: null, explanation: "Mandate can't enforce budgets per category yet.", summary: [], warnings: [] });
+    expect(s).toEqual({ original: "Max $200 a month on dining", rewrite: null, explanation: "MoneyWise can't enforce budgets per category yet.", summary: [], warnings: [] });
   });
 
   it("a risky rewrite (everything automatic) is shown WITH its risk warning", async () => {
@@ -96,7 +96,7 @@ describe("POST /api/personas/:id/mandate/explain", () => {
     fakeModel({
       suggestions: [
         { rewrite: "Ask me before any payment over $50.", explanation: "Big payments wait for you." },
-        { rewrite: null, explanation: "Mandate can't limit spending to weekdays yet." },
+        { rewrite: null, explanation: "MoneyWise can't limit spending to weekdays yet." },
       ],
     });
     const out = await explain(["Check big spends with me", "Only weekdays"]);

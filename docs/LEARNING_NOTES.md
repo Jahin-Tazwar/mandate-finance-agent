@@ -416,6 +416,6 @@ Chat uses it for word-by-word answers; the timeline uses it so Approvals update 
 ### 5. On-chain anchoring (`anchor/index.ts`)
 **The idea:** our audit log proves nothing was edited, *if you trust our server*. So every 15 minutes we publish the log's latest fingerprint on a public **test** blockchain, where nobody (us included) can change it. One fingerprint is enough, because each entry's hash already covers every entry before it.
 
-The transaction's data is plain text: `mandate-audit:v1:42:5be1…` = "the log up to entry #42 had this fingerprint". `GET /api/anchors/:txHash/check` reads it back **from the chain** and compares.
+The transaction's data is plain text: `moneywise-audit:v1:42:5be1…` = "the log up to entry #42 had this fingerprint". `GET /api/anchors/:txHash/check` reads it back **from the chain** and compares.
 
 Try it: `npm run anchor:wallet` creates the test wallet. Get free test ETH from a Base Sepolia faucet, restart the API, then `POST /api/audit/anchor` and open the `explorerUrl`.

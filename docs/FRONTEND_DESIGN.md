@@ -1,4 +1,4 @@
-# Mandate: Frontend Design
+# MoneyWise: Frontend Design
 
 > For the Frontend Developer. It describes **what each screen shows, which endpoints feed it, and how it behaves**, matched to the backend in `docs/API_CONTRACT.md`.
 > Framework is your choice (React + Vite or Next.js). Everything here works with both.
@@ -49,7 +49,7 @@ export const money = (cents: number, currency = "USD") =>
 ```
 Desktop (>= 1024 px)
 ┌──────────────┬──────────────────────────────────────────────────────────────┐
-│  Mandate     │  [Maya Chen v]       [Run payday]     [Agent: ON | OFF]      │
+│  MoneyWise   │  [Maya Chen v]       [Run payday]     [Agent: ON | OFF]      │
 │              ├──────────────────────────────────────────────────────────────┤
 │  Dashboard   │                                                              │
 │  Wishes      │                                                              │
@@ -84,7 +84,7 @@ Each screen lists: purpose · layout · data · states · interactions. UI wordi
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
-│ Mandate                                                       │
+│ MoneyWise                                                     │
 │ Sign in to a demo account                                     │
 ├───────────────────────────────────────────────────────────────┤
 │ Maya Chen      International student, paid weekly  [Sign in]  │

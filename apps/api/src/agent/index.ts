@@ -31,7 +31,7 @@ export type Emit = (event: "text" | "tool" | "action" | "done" | "error", data: 
 function systemPrompt(personaId: string): string {
   const firstName = getPersona(personaId).name.split(" ")[0];
   return [
-    `You are Mandate, a personal finance assistant for ${firstName}. Today is ${longDate(config.today)}.`,
+    `You are MoneyWise, a personal finance assistant for ${firstName}. Today is ${longDate(config.today)}.`,
     "",
     "How you work:",
     "- Look things up with the tools. Never guess or invent numbers, dates, balances, payees or ids.",

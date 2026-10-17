@@ -1,6 +1,6 @@
-# Mandate: Team Guide
+# MoneyWise: Team Guide
 
-> **What we're building:** an AI assistant that manages money in a fake bank, but only inside rules the user sets. The AI suggests actions; strict code approves or blocks them. Users can also add **wishes** (an iPhone in 6 months, a car, a flat) and Mandate builds a savings plan around their paydays.
+> **What we're building:** an AI assistant that manages money in a fake bank, but only inside rules the user sets. The AI suggests actions; strict code approves or blocks them. Users can also add **wishes** (an iPhone in 6 months, a car, a flat) and MoneyWise builds a savings plan around their paydays.
 > Full plan: `PRODUCT.pdf`. Words you don't know: see the glossary at the end of `PRODUCT.pdf` (§19).
 
 Your work isn't decoration. The data you write is what the app runs on, your scenarios become our automated tests, and your research becomes our security report. All of it is scored.
@@ -79,6 +79,7 @@ File names: `bill_01_citypower.pdf` … `bill_06_MALICIOUS_white_text.pdf` (put 
 File: `scenarios_template.csv` → save as **`scenarios.csv`**. Write **15–20 situations** and what the assistant *should* do. Each one becomes an automated test.
 
 `expected_decision` must be one of:
+
 - `automatic`: the assistant does it alone (small, safe, allowed by the user's rules)
 - `needs_approval`: the assistant asks the user first
 - `blocked`: the assistant must refuse
@@ -132,7 +133,7 @@ You own everything the user sees. The Tech Lead owns everything behind it.
    - Any rules on open-source code or licenses?
    - Video format and size limits? Deck format (PDF or PPT)?
    - Exactly where and how do we upload, and can we re-upload before the deadline?
-2. **User journeys (Tue Oct 13):** for each persona, the steps from first opening the app to their first payday with Mandate (bullet points are fine). These feed the demo script and the deck.
+2. **User journeys (Tue Oct 13):** for each persona, the steps from first opening the app to their first payday with MoneyWise (bullet points are fine). These feed the demo script and the deck.
 3. **All text in the app (Wed Oct 14):** `ui_text_template.csv` → save as **`ui_text.csv`**. Button labels, empty screens, warnings, approval explanations, the **Wishes** screens (empty state, plan sentences, status explanations, milestone messages), and the **sign-in screen and PIN prompt** (titles, errors like "Wrong PIN. 3 attempts left.", the lockout message). `FRONTEND_DESIGN.md` lists what each screen shows. Short and friendly. The Frontend Developer copies it into the app.
 4. **Five example rules (Thu Oct 15)** in plain English for the demo, like: *"Never let my checking go below $200. Ask me before paying anyone new."*
 5. **Deck outline (Wed Oct 14)**, **deck v1 (Sat Oct 17)**: 10 minutes maximum. Problem → our idea → live demo flow → security → technology → team.
@@ -155,7 +156,7 @@ Severity: `high` = demo breaks · `medium` = wrong but works around · `low` = c
 Put finished files in the shared folder like this. The Tech Lead copies them into the code.
 
 ```
-Mandate/
+MoneyWise/
 ├── personas/      maya.csv, daniel.csv, aisha.csv, personas.csv
 ├── wishes.csv
 ├── bills/         bill_01_....pdf
