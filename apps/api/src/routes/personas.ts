@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { AccountType, Category, IsoDate } from "@mandate/shared";
+import { requireAuth } from "../http/auth";
 import { listAccounts, listPersonas, queryTransactions } from "../store";
 
 export const personaRoutes = Router();
@@ -8,6 +9,8 @@ export const personaRoutes = Router();
 personaRoutes.get("/personas", (_req, res) => {
   res.json(listPersonas());
 });
+
+personaRoutes.use("/personas/:personaId", requireAuth);
 
 personaRoutes.get("/personas/:personaId/accounts", (req, res) => {
   res.json(listAccounts(req.params.personaId));

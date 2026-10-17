@@ -1,6 +1,8 @@
 import express, { type ErrorRequestHandler } from "express";
 import { ZodError } from "zod";
 import { HttpError } from "./http/errors";
+import { sessionMiddleware } from "./http/auth";
+import { authRoutes } from "./routes/auth";
 import { analyticsRoutes } from "./routes/analytics";
 import { personaRoutes } from "./routes/personas";
 import { systemRoutes } from "./routes/system";
@@ -12,7 +14,9 @@ import { systemRoutes } from "./routes/system";
 export function createApp() {
   const app = express();
   app.use(express.json());
+  app.use(sessionMiddleware);
 
+  app.use("/api", authRoutes);
   app.use("/api", systemRoutes);
   app.use("/api", personaRoutes);
   app.use("/api", analyticsRoutes);

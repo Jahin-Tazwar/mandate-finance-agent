@@ -2,6 +2,7 @@ import type { Account, AccountType, Category, Persona, Transaction, TransactionP
 import { config } from "../config";
 import { notFound } from "../http/errors";
 import { loadSeed, type StoreState } from "./seed";
+import { clearAuthLockouts } from "./auth";
 
 /**
  * The in-memory store: the ONLY module that reads or changes data.
@@ -21,8 +22,11 @@ export function initStore(seedDir = config.seedDir): StoreState {
   return state;
 }
 
-/** Back to the original demo data. */
-export const resetStore = () => initStore();
+/** Back to the original demo data (also clears sign-in lockouts). */
+export const resetStore = () => {
+  clearAuthLockouts();
+  return initStore();
+};
 
 export const loadedAt = () => current().loadedAt;
 

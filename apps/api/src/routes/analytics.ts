@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { getBills, getBudget, getForecast, getPayCycle, getSubscriptions } from "../analytics";
+import { requireAuth } from "../http/auth";
 import { getPersona } from "../store";
 
 export const analyticsRoutes = Router();
@@ -10,6 +11,8 @@ analyticsRoutes.param("personaId", (_req, _res, next, personaId: string) => {
   getPersona(personaId);
   next();
 });
+
+analyticsRoutes.use("/personas/:personaId", requireAuth);
 
 analyticsRoutes.get("/personas/:personaId/pay-cycle", (req, res) => {
   res.json(getPayCycle(req.params.personaId));

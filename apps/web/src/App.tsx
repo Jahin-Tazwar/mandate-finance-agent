@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import type { Account, Bill, Budget, Category, Forecast, PayCycle, Persona, Subscription, Transaction } from "@mandate/shared";
 import {
   apiGet,
+  apiLogout,
+  fetchAuthMe,
   parseAccounts,
   parseBills,
   parseBudget,
@@ -12,6 +14,8 @@ import {
   parseTransactions,
   type Parser,
 } from "./lib/api";
+import { LoginScreen } from "./LoginScreen";
+import { PersonaSwitcherModal } from "./PersonaSwitcherModal";
 import {
   categoryLabel,
   createWish,
@@ -204,6 +208,10 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
       return <svg {...common}><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z" /></svg>;
     case "check":
       return <svg {...common}><path d="m5 12 4 4L19 6" /></svg>;
+    case "logout":
+      return <svg {...common}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>;
+    case "users":
+      return <svg {...common}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>;
     default:
       return null;
   }
@@ -276,26 +284,48 @@ function TransactionRow({ transaction, currency, account }: { transaction: Trans
 function App() {
   const [route, setRoute] = useState(() => viewFromPath(window.location.pathname));
   const { view, wishId } = route;
+  const [currentUser, setCurrentUser] = useState<Persona | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
   const [personaId, setPersonaId] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<Category | "all">("all");
   const [transactionOffset, setTransactionOffset] = useState(0);
   const [transactionItems, setTransactionItems] = useState<Transaction[]>([]);
-  const personas = useResource("/api/personas", parsePersonas, refreshKey);
-  const personaList = personas.status === "success" ? personas.data : [];
 
+  // Check auth on startup via GET /api/auth/me
   useEffect(() => {
-    if (personas.status === "success" && !personaId && personas.data.length > 0) {
-      const firstPersona = personas.data.at(0);
-      if (firstPersona) setPersonaId(firstPersona.id);
-    }
-  }, [personas, personaId]);
+    let active = true;
+    fetchAuthMe().then((persona) => {
+      if (active) {
+        if (persona) {
+          setCurrentUser(persona);
+          setPersonaId(persona.id);
+        }
+        setAuthLoading(false);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
-  const selectedPersona = useMemo(
-    () => personaList.find((persona) => persona.id === personaId),
-    [personaList, personaId],
-  );
+  const handleSignOut = async () => {
+    await apiLogout();
+    setCurrentUser(null);
+    setPersonaId("");
+    setRoute({ view: "overview", wishId: null });
+  };
+
+  const handlePersonaSwitched = (newPersona: Persona) => {
+    setCurrentUser(newPersona);
+    setPersonaId(newPersona.id);
+    setTransactionOffset(0);
+    setTransactionItems([]);
+    setRefreshKey((v) => v + 1);
+  };
+
   const root = personaId ? `/api/personas/${encodeURIComponent(personaId)}` : null;
   const accounts = useResource(root ? `${root}/accounts` : null, parseAccounts, refreshKey);
   const budget = useResource(root ? `${root}/budget` : null, parseBudget, refreshKey);
@@ -307,7 +337,7 @@ function App() {
   const transactionPath = root ? `${root}/transactions?limit=100&offset=${transactionOffset}` : null;
   const allTransactions = useResource(transactionPath, parseTransactions, refreshKey);
   const transactionPage = allTransactions.status === "success" && allTransactions.key === transactionPath ? allTransactions.data : null;
-  const currency = selectedPersona?.currency ?? "USD";
+  const currency = currentUser?.currency ?? "USD";
   const accountList = accounts.status === "success" ? accounts.data : [];
   const accountNames = useMemo(() => new Map(accountList.map((account) => [account.id, account])), [accountList]);
 
@@ -356,6 +386,31 @@ function App() {
     ? { status: "loading" as const, retry: allTransactions.retry }
     : allTransactions;
 
+  if (authLoading) {
+    return (
+      <div className="login-page">
+        <div className="login-container" style={{ textAlign: "center", padding: "100px 20px" }}>
+          <span className="spinner" style={{ width: 36, height: 36, margin: "0 auto 18px" }} />
+          <p style={{ fontSize: 16, color: "var(--ink)", fontWeight: 700 }}>Connecting to MoneyWise…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <LoginScreen
+        onLoginSuccess={(persona) => {
+          setCurrentUser(persona);
+          setPersonaId(persona.id);
+          setRefreshKey((v) => v + 1);
+        }}
+      />
+    );
+  }
+
+  const selectedPersona: Persona = currentUser;
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -372,7 +427,13 @@ function App() {
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="secure-note"><span className="secure-icon"><Icon name="shield" size={16} /></span><span><strong>Your rules come first</strong><small>Private by design</small></span></div>
+          <div className="secure-note" onClick={() => setSwitcherOpen(true)} style={{ cursor: "pointer" }} title="Switch persona">
+            <span className="avatar" style={{ flexShrink: 0 }}>{selectedPersona.name.split(" ").map((p) => p[0]).join("").slice(0, 2)}</span>
+            <div style={{ minWidth: 0, overflow: "hidden" }}>
+              <strong style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selectedPersona.name}</strong>
+              <small style={{ color: "var(--purple)", fontWeight: 700 }}>Switch account ↗</small>
+            </div>
+          </div>
           <div className="sidebar-footer">MONEYWISE FINANCE <span>·</span> DEMO</div>
         </div>
       </aside>
@@ -383,31 +444,31 @@ function App() {
           <div className="topbar-context"><span className="context-label">YOUR FINANCES</span><span className="context-divider">/</span><span>{viewLabels[view]}</span></div>
           <div className="topbar-actions">
             <span className="live-indicator"><i /> Live data</span>
-            <label className="persona-select-wrap">
-              <span className="avatar">{selectedPersona?.name.split(" ").map((part) => part[0]).join("").slice(0, 2) ?? "…"}</span>
-              <select aria-label="Choose demo persona" value={personaId} onChange={(event) => setPersonaId(event.target.value)} disabled={personas.status !== "success"}>
-                {personas.status === "loading" && <option value="">Loading profiles…</option>}
-                {personas.status === "error" && <option value="">Profiles unavailable</option>}
-                {personaList.map((persona) => <option key={persona.id} value={persona.id}>{persona.name}</option>)}
-              </select>
-              <Icon name="chevron" size={15} />
-            </label>
-            <button className="icon-button refresh-button" aria-label="Refresh dashboard data" title="Refresh data" onClick={() => { setTransactionOffset(0); setTransactionItems([]); setRefreshKey((value) => value + 1); }}><Icon name="refresh" size={18} /></button>
+            <div className="persona-profile-badge" onClick={() => setSwitcherOpen(true)} title="Click to switch persona">
+              <span className="avatar">{selectedPersona.name.split(" ").map((part) => part[0]).join("").slice(0, 2)}</span>
+              <div className="persona-info-badge">
+                <span className="persona-badge-name">{selectedPersona.name}</span>
+                <span className="persona-badge-role">Demo Account</span>
+              </div>
+              <button type="button" className="switch-demo-btn" onClick={(e) => { e.stopPropagation(); setSwitcherOpen(true); }}>
+                Switch
+              </button>
+            </div>
+            <button className="icon-button" aria-label="Sign out" title="Sign out" onClick={handleSignOut}>
+              <Icon name="logout" size={18} />
+            </button>
+            <button className="icon-button refresh-button" aria-label="Refresh dashboard data" title="Refresh data" onClick={() => { setTransactionOffset(0); setTransactionItems([]); setRefreshKey((value) => value + 1); }}>
+              <Icon name="refresh" size={18} />
+            </button>
           </div>
         </header>
 
         <main className="page-content">
-          {!selectedPersona && personas.status === "loading" && <div className="page-loading"><span className="spinner" />Connecting to your money…</div>}
-          {!selectedPersona && personas.status === "error" && <div className="global-error" role="alert"><strong>Couldn't connect to the finance API</strong><span>{personas.message}. Start the API with <code>npm run dev:api</code>, then retry.</span><button className="button button-primary" onClick={personas.retry}>Retry connection</button></div>}
-          {selectedPersona && (
-            <>
-              {view === "overview" && <Overview persona={selectedPersona} accounts={accounts} budget={budget} forecast={forecast} payCycle={payCycle} bills={bills} subscriptions={subscriptions} transactions={recentTransactions} accountNames={accountNames} onNavigate={navigate} />}
-                  {(view === "wishes" || view === "wishNew" || view === "wishDetail" || view === "wishEdit") && <WishesPage persona={selectedPersona} payCycle={payCycle} view={view} wishId={wishId} onNavigate={navigate} onOpenWish={openWish} onEditWish={editWish} />}
-              {view === "transactions" && <TransactionsView persona={selectedPersona} resource={transactionResource} items={visibleTransactions} loadedCount={transactionItems.length} onLoadMore={() => setTransactionOffset(transactionItems.length)} accountNames={accountNames} search={search} onSearch={setSearch} category={categoryFilter} onCategory={setCategoryFilter} />}
-              {view === "subscriptions" && <SubscriptionsView persona={selectedPersona} resource={subscriptions} />}
-              {view === "bills" && <BillsView persona={selectedPersona} resource={bills} asOfDate={forecast.status === "success" ? forecast.data.days.at(0)?.date : undefined} />}
-            </>
-          )}
+          {view === "overview" && <Overview persona={selectedPersona} accounts={accounts} budget={budget} forecast={forecast} payCycle={payCycle} bills={bills} subscriptions={subscriptions} transactions={recentTransactions} accountNames={accountNames} onNavigate={navigate} />}
+          {(view === "wishes" || view === "wishNew" || view === "wishDetail" || view === "wishEdit") && <WishesPage persona={selectedPersona} payCycle={payCycle} view={view} wishId={wishId} onNavigate={navigate} onOpenWish={openWish} onEditWish={editWish} />}
+          {view === "transactions" && <TransactionsView persona={selectedPersona} resource={transactionResource} items={visibleTransactions} loadedCount={transactionItems.length} onLoadMore={() => setTransactionOffset(transactionItems.length)} accountNames={accountNames} search={search} onSearch={setSearch} category={categoryFilter} onCategory={setCategoryFilter} />}
+          {view === "subscriptions" && <SubscriptionsView persona={selectedPersona} resource={subscriptions} />}
+          {view === "bills" && <BillsView persona={selectedPersona} resource={bills} asOfDate={forecast.status === "success" ? forecast.data.days.at(0)?.date : undefined} />}
         </main>
         <footer className="page-footer"><span>AI can help organize. <strong>Your rules stay in control.</strong></span><span>MoneyWise <i>·</i> Personal finance, on your terms</span></footer>
       </div>
@@ -419,6 +480,14 @@ function App() {
           </button>
         ))}
       </nav>
+
+      <PersonaSwitcherModal
+        isOpen={switcherOpen}
+        currentPersona={selectedPersona}
+        onClose={() => setSwitcherOpen(false)}
+        onPersonaSwitched={handlePersonaSwitched}
+        onSignOut={handleSignOut}
+      />
     </div>
   );
 }

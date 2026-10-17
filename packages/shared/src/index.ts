@@ -6,3 +6,4 @@ export * from "./entities";
 export * from "./policy";
 export * from "./wishes";
 export * from "./analytics";
+export * from "./auth";
