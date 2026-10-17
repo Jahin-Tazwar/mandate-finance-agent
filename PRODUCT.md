@@ -274,7 +274,7 @@ Demo-grade on purpose: the credentials are public (shown on the sign-in screen) 
 | LLM | **OpenRouter** via the official **`openai` npm SDK** (`baseURL: https://openrouter.ai/api/v1`) | One API for many models; swap models in `.env`; tool calling uses the standard OpenAI format |
 | Model choice | `LLM_MODEL` (primary) + `LLM_FALLBACK_MODEL` in `.env`. Pick a strong **tool-calling** model as primary and a cheaper one as fallback (filter by "tools" support on openrouter.ai/models) | Not tied to one vendor; cost control |
 | Streaming | **Server-Sent Events** from Express | Chat answers and the action timeline update live |
-| PDF parsing | **pdf-parse** (text) + LLM extraction → Zod-validated | Bill and receipt ingestion |
+| PDF parsing | **unpdf** (Mozilla's pdf.js built for servers, plain JavaScript) + plain-pattern field extraction, no AI | Bill ingestion. Replaced pdf-parse on Oct 17: its optional native graphics module crashed the server on Render |
 | Synthetic data | P2's spreadsheets are the seed; **@faker-js/faker** generates placeholders until they arrive | Realistic personas, written by humans, loaded by code |
 | Audit / crypto | `node:crypto` SHA-256 hash chain | Built-in, no dependencies. The chain's latest hash already covers every earlier entry, so no Merkle tree is needed |
 | On-chain | **viem** → **Base Sepolia or Ethereum Sepolia** (root in tx calldata) | Real tx hashes at no cost |

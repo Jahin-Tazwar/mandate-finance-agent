@@ -1,4 +1,4 @@
-import { PDFParse } from "pdf-parse";
+import { extractText, getDocumentProxy } from "unpdf";
 import type { Action } from "@mandate/shared";
 import { proposeAction } from "../actions";
 import { appendAudit } from "../audit";
@@ -29,18 +29,22 @@ export interface DocumentResult {
   actions: Action[];
 }
 
-/** The PDF's text, all pages. Throws 400 if it can't be read. */
+/**
+ * The PDF's text, all pages, one line per line of text. Throws 400 if it can't be read.
+ * Uses unpdf: Mozilla's PDF reader built for servers, in plain JavaScript. (The previous
+ * library loaded a native graphics module that crashed the whole server on Render.)
+ */
 async function readPdfText(data: Buffer): Promise<string> {
-  const parser = new PDFParse({ data });
+  let pdf: Awaited<ReturnType<typeof getDocumentProxy>> | null = null;
   try {
-    const result = await parser.getText();
-    // Drop the page markers pdf-parse adds, e.g. "-- 1 of 1 --"
-    return result.text.replace(/^-- \d+ of \d+ --$/gm, "").slice(0, 50_000);
+    pdf = await getDocumentProxy(new Uint8Array(data));
+    const { text } = await extractText(pdf, { mergePages: true });
+    return text.slice(0, 50_000);
   } catch {
     // Reject: broken or encrypted PDF
     throw new HttpError(400, "Couldn't read this PDF");
   } finally {
-    await parser.destroy();
+    await pdf?.cleanup(); // free its memory (no worker to stop in this build)
   }
 }
 
