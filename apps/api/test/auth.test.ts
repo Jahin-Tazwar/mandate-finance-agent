@@ -1,7 +1,8 @@
 import request from "supertest";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app";
-import { clearLockouts, createSessionToken } from "../src/auth";
+import { clearLockouts, createSessionToken, verifyPin } from "../src/auth";
+import { HttpError } from "../src/http/errors";
 import { initStore } from "../src/store";
 import { signedIn } from "./helpers";
 
@@ -102,5 +103,50 @@ describe("admin reset", () => {
     await request(app).post("/api/admin/reset").expect(403);
     await request(app).post("/api/admin/reset").set("x-admin-key", "wrong").expect(403);
     await request(app).post("/api/admin/reset").set("x-admin-key", "test-key").expect(200);
+  });
+});
+
+describe("red team: guessing the PIN with a stolen session", () => {
+  afterEach(() => vi.useRealTimers());
+
+  /** Five wrong PINs; returns how long the lock is (seconds) */
+  const fiveWrong = (): number => {
+    for (let i = 0; i < 4; i++) expect(() => verifyPin("maya", "0000")).toThrow("Wrong PIN");
+    try {
+      verifyPin("maya", "0000");
+    } catch (err) {
+      return (err as HttpError).extra.retryAfterSeconds as number;
+    }
+    throw new Error("the 5th wrong PIN didn't lock");
+  };
+
+  it("each lock in a row is longer: 5 min, 15, 30, then 1 hour", () => {
+    vi.useFakeTimers();
+    const locks: number[] = [];
+    for (let i = 0; i < 5; i++) {
+      const seconds = fiveWrong();
+      locks.push(seconds / 60);
+      expect(() => verifyPin("maya", "1111")).toThrow("Too many attempts"); // even the right PIN waits
+      vi.advanceTimersByTime(seconds * 1000); // wait the lock out
+    }
+    expect(locks).toEqual([5, 15, 30, 60, 60]);
+  });
+
+  it("8 hours of guessing: about 55 tries, not 480", () => {
+    vi.useFakeTimers();
+    let guesses = 0;
+    const end = Date.now() + 8 * 3600 * 1000;
+    while (Date.now() < end) {
+      guesses += 5;
+      vi.advanceTimersByTime(fiveWrong() * 1000);
+    }
+    expect(guesses).toBe(55);
+  });
+
+  it("the right PIN clears it: the next mistake starts again at 5 minutes", () => {
+    vi.useFakeTimers();
+    vi.advanceTimersByTime(fiveWrong() * 1000);
+    verifyPin("maya", "1111"); // correct
+    expect(fiveWrong()).toBe(5 * 60);
   });
 });

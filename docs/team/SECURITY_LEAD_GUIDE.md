@@ -40,7 +40,7 @@ The user's rules are called the **mandate** (like a written permission). The def
 **Other protections already built** (you can mention all of them):
 
 - **Sign-in:** each demo person has a username and password. Signed in as Maya, you **can't** open Daniel's data ("That isn't your account").
-- **PIN:** approving a payment needs a 4-digit PIN, even when signed in. 5 wrong tries lock it for 5 minutes. The same goes for passwords.
+- **PIN:** approving a payment needs a 4-digit PIN, even when signed in. 5 wrong tries lock it for 5 minutes; each lock in a row is longer (15 minutes, 30, then 1 hour). The same goes for passwords.
 - **Audit log:** every action is recorded in a **tamper-evident** log. Each entry holds a fingerprint of the one before it, so changing any old entry is detected.
 - **Privacy:** card numbers, emails and phone numbers are removed before anything is sent to the AI ("redaction").
 - **Limits on the AI:** at most 3 actions per chat message. It has **no button** to approve, change rules or turn itself on.
