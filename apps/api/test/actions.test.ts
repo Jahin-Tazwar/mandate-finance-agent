@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { Action } from "@mandate/shared";
 import { proposeAction } from "../src/actions";
-import { getBills } from "../src/analytics";
+import { getBills, getSubscriptions } from "../src/analytics";
 import { createApp } from "../src/app";
 import { clearLockouts } from "../src/auth";
-import { getAccount, initStore, setAgentEnabled } from "../src/store";
+import { allTransactions, getAccount, initStore, setAgentEnabled } from "../src/store";
 import { signedIn } from "./helpers";
 
 const app = createApp();
@@ -236,5 +236,49 @@ describe("red team: paying the same bill twice", () => {
     const card = agentPays("daniel", "CityPower", 13_280);
     await signedIn(app, "daniel").post(`/api/actions/${card.id}/decision`).send({ decision: "reject" }).expect(200);
     expect(agentPays("daniel", "CityPower", 13_280).status).toBe("pending_approval");
+  });
+});
+
+describe("red team: repeating other actions", () => {
+  const save = () => proposeAction("maya", { source: "agent", type: "wish_contribution", wishId: "wish_maya_1", amountCents: 4_039 });
+  const fitzone = () => getSubscriptions("maya").find((s) => s.merchant === "FitZone")!;
+  const cancel = (merchant = fitzone().merchant) =>
+    proposeAction("maya", { source: "agent", type: "cancel_subscription", subscriptionId: fitzone().id, merchant });
+  const charge = () => allTransactions("maya").find((t) => t.amountCents < 0)!;
+  const dispute = (transactionId = charge().id) => proposeAction("maya", { source: "agent", type: "dispute", transactionId });
+
+  it("wish auto-save: the $80 limit is per payday, not per top-up", () => {
+    const before = checking("maya");
+    const first = save(); // $40.39
+    const second = save(); // $80.78 in total: over the limit, so it asks
+    expect([first.status, second.status]).toEqual(["executed", "pending_approval"]);
+    expect(second.reasons).toContain("This would make $80.78 saved for wishes this payday, over your $80 limit.");
+    expect(checking("maya")).toBe(before - 4_039);
+  });
+
+  it("cancelling the same subscription twice: one card; after it's done, blocked", async () => {
+    const first = cancel();
+    const again = cancel();
+    expect([first.status, again.status]).toEqual(["pending_approval", "denied"]);
+    expect(again.reasons[0]).toBe("Cancelling FitZone is already waiting for your approval.");
+
+    await signedIn(app, "maya").post(`/api/actions/${first.id}/decision`).send({ decision: "approve", pin: "1111" }).expect(200);
+    expect(cancel().reasons[0]).toBe("Cancelling FitZone was already done.");
+  });
+
+  it("disputing the same charge twice: one card", () => {
+    expect([dispute().status, dispute().status]).toEqual(["pending_approval", "denied"]);
+  });
+
+  it("a rejected cancel doesn't count: asking again later is fine", async () => {
+    const first = cancel();
+    await signedIn(app, "maya").post(`/api/actions/${first.id}/decision`).send({ decision: "reject" }).expect(200);
+    expect(cancel().status).toBe("pending_approval");
+  });
+
+  it("can't dispute money coming in, or cancel under another company's name", () => {
+    const pay = allTransactions("maya").find((t) => t.amountCents > 0)!;
+    expect(() => dispute(pay.id)).toThrow("Only charges (money going out) can be disputed");
+    expect(() => cancel("Rent")).toThrow("That subscription is FitZone, not Rent");
   });
 });

@@ -4,10 +4,13 @@ import { config } from "../config";
 import { HttpError } from "../http/errors";
 import { usd } from "../lib/money";
 import { allTransactions, getMandate, getWish, isAgentEnabled, listAccounts, listActions } from "../store";
-import { type EarlierPayment, type PolicyContext, evaluate } from "./engine";
+import { type EarlierPayment, type PolicyContext, evaluate, requestKey } from "./engine";
 
-/** Gathers the facts the engine needs for one persona. */
-export function policyContext(personaId: string): PolicyContext {
+/**
+ * Gathers the facts the engine needs for one persona.
+ * `exceptActionId` = leave this action out (when re-checking it at approval, so it isn't its own repeat).
+ */
+export function policyContext(personaId: string, exceptActionId?: string): PolicyContext {
   // Current balance of each account, e.g. { checking: 50892, savings: 60000, credit: 0 }
   const balances = { checking: 0, savings: 0, credit: 0 } as Record<AccountType, number>;
   for (const account of listAccounts(personaId)) balances[account.type] = account.balanceCents;
@@ -28,7 +31,9 @@ export function policyContext(personaId: string): PolicyContext {
     knownPayees,
     today: config.today,
     agentMovedTodayCents: agentMovedToday(personaId),
-    earlierPayments: earlierPayments(personaId),
+    earlierPayments: earlierPayments(personaId, exceptActionId),
+    earlierRequests: earlierRequests(personaId, exceptActionId),
+    agentSavedForWishesCents: agentSavedForWishes(personaId),
   };
 }
 
@@ -37,11 +42,11 @@ export function policyContext(personaId: string): PolicyContext {
  * document), e.g. [{ payee: "mobi telecom", amountCents: 3500, status: "executed", ... }].
  * Like the daily cap, every action in memory happened on the demo's today.
  */
-function earlierPayments(personaId: string): EarlierPayment[] {
+function earlierPayments(personaId: string, exceptActionId?: string): EarlierPayment[] {
   const list: EarlierPayment[] = [];
   for (const a of listActions(personaId)) {
-    // Skip: not a payment, or it never happened (blocked / rejected)
-    if (a.type !== "payment" || (a.status !== "executed" && a.status !== "pending_approval")) continue;
+    // Skip: not a payment, it never happened (blocked / rejected), or it's the one being checked
+    if (a.type !== "payment" || (a.status !== "executed" && a.status !== "pending_approval") || a.id === exceptActionId) continue;
     list.push({
       actionId: a.id,
       payee: String(a.params.payee).trim().toLowerCase(),
@@ -51,6 +56,32 @@ function earlierPayments(personaId: string): EarlierPayment[] {
     });
   }
   return list;
+}
+
+/** Cancels and disputes done or waiting, e.g. "cancel:sub_maya_fitzone" → "pending_approval". */
+function earlierRequests(personaId: string, exceptActionId?: string): Map<string, "executed" | "pending_approval"> {
+  const map = new Map<string, "executed" | "pending_approval">();
+  for (const a of listActions(personaId)) {
+    // Skip: it never happened (blocked / rejected), or it's the one being checked
+    if ((a.status !== "executed" && a.status !== "pending_approval") || a.id === exceptActionId) continue;
+    const key = requestKey({ type: a.type, ...a.params } as ProposedAction);
+    if (key) map.set(key, a.status);
+  }
+  return map;
+}
+
+/**
+ * What the agent already saved for wishes "this payday", e.g. $40.39 + $6.67 = $47.06.
+ * Like the daily cap: every action in memory happened on the demo's today, which is a payday
+ * (a reset clears them). The user's own top-ups don't count.
+ */
+function agentSavedForWishes(personaId: string): number {
+  let total = 0;
+  for (const a of listActions(personaId)) {
+    if (a.type !== "wish_contribution" || a.source === "user" || a.status !== "executed") continue;
+    total += Number(a.params.amountCents);
+  }
+  return total;
 }
 
 /**

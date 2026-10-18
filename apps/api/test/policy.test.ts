@@ -32,6 +32,8 @@ const ctx: PolicyContext = {
   today: "2026-10-12",
   agentMovedTodayCents: 0,
   earlierPayments: [],
+  earlierRequests: new Map(),
+  agentSavedForWishesCents: 0,
 };
 
 const pay = (payee: string, amountCents: number, source: ProposedAction["source"] = "agent"): ProposedAction => ({

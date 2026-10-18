@@ -46,14 +46,19 @@ export function assertTargetsExist(personaId: string, action: ProposedAction): v
     }
   }
 
-  // Reject: cancelling a subscription this persona doesn't have
-  if (action.type === "cancel_subscription" && !getSubscriptions(personaId).some((s) => s.id === action.subscriptionId)) {
-    throw new HttpError(404, `Subscription "${action.subscriptionId}" not found`);
+  // Reject: cancelling a subscription this persona doesn't have, or naming the wrong company
+  // (the card says "Cancel <merchant>", so it must be the subscription's own merchant)
+  if (action.type === "cancel_subscription") {
+    const sub = getSubscriptions(personaId).find((s) => s.id === action.subscriptionId);
+    if (!sub) throw new HttpError(404, `Subscription "${action.subscriptionId}" not found`);
+    if (sub.merchant !== action.merchant) throw new HttpError(422, `That subscription is ${sub.merchant}, not ${action.merchant}`);
   }
 
-  // Reject: disputing a transaction that isn't theirs
-  if (action.type === "dispute" && !allTransactions(personaId).some((t) => t.id === action.transactionId)) {
-    throw new HttpError(404, `Transaction "${action.transactionId}" not found`);
+  // Reject: disputing a transaction that isn't theirs, or money coming in (e.g. their paycheck)
+  if (action.type === "dispute") {
+    const tx = allTransactions(personaId).find((t) => t.id === action.transactionId);
+    if (!tx) throw new HttpError(404, `Transaction "${action.transactionId}" not found`);
+    if (tx.amountCents >= 0) throw new HttpError(422, "Only charges (money going out) can be disputed");
   }
 }
 
@@ -180,11 +185,11 @@ export function decideAction(personaId: string, actionId: string, body: ActionDe
   // Re-check the hard rules NOW: the balance may have changed since it was proposed.
   // The user's approval stands in for the tier check, but never for the floor or the funds.
   const proposed = proposedFrom(action);
-  const ctx = policyContext(personaId);
+  const ctx = policyContext(personaId, actionId); // without this card itself
 
   // ...and never for paying the same bill twice: three cards for one bill, approved one by
   // one, pay once. Only executed payments count here, so approving the FIRST card still works
-  // while the others wait. (This card itself is still pending, so it never matches itself.)
+  // while the others wait.
   const paid = ctx.earlierPayments.filter((p) => p.status === "executed");
   const duplicate = findDuplicate(proposed, paid);
   const recheck: PolicyDecision = duplicate

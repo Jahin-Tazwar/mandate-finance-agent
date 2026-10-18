@@ -21,6 +21,20 @@ export interface PolicyContext {
   agentMovedTodayCents: number;
   /** MoneyWise payments already made or waiting for approval (for "don't pay the same bill twice"). */
   earlierPayments: ReadonlyArray<EarlierPayment>;
+  /** Cancels and disputes already done or waiting, by requestKey, e.g. "dispute:tx_maya_0412" → "executed". */
+  earlierRequests: ReadonlyMap<string, "executed" | "pending_approval">;
+  /** How much the agent already saved for wishes this payday (counts toward the auto-save limit). */
+  agentSavedForWishesCents: number;
+}
+
+/**
+ * What a cancel or dispute is about, so a repeat can be spotted, e.g. "cancel:sub_maya_fitzone".
+ * null for actions that move money (payments have their own duplicate check).
+ */
+export function requestKey(action: ProposedAction): string | null {
+  if (action.type === "cancel_subscription") return `cancel:${action.subscriptionId}`;
+  if (action.type === "dispute") return `dispute:${action.transactionId}`;
+  return null;
 }
 
 /** A payment MoneyWise already made or is waiting to make, e.g. Mobi Telecom $35, executed. */
@@ -129,6 +143,15 @@ export function evaluate(action: ProposedAction, ctx: PolicyContext): PolicyDeci
     return deny(duplicateReason(action, duplicate));
   }
 
+  // Block: cancelling the same subscription or disputing the same charge twice, from anyone.
+  // No money moves, but a second card is confusing, and a second dispute is a false claim.
+  const key = requestKey(action);
+  const earlier = key ? ctx.earlierRequests.get(key) : undefined;
+  if (earlier) {
+    const what = action.type === "cancel_subscription" ? `Cancelling ${action.merchant}` : "A dispute of this charge";
+    return deny(earlier === "executed" ? `${what} was already done.` : `${what} is already waiting for your approval.`);
+  }
+
   // Block: moving money from an account to the same account makes no sense
   if (action.type === "transfer" && action.fromAccount === action.toAccount) {
     return deny("Can't move money from an account to itself.");
@@ -178,12 +201,14 @@ export function evaluate(action: ProposedAction, ctx: PolicyContext): PolicyDeci
   };
 
   if (action.type === "wish_contribution") {
-    // Wish savings within the per-payday limit can be automatic
+    // Wish savings within the per-payday limit can be automatic. The limit is for the whole
+    // payday, not each top-up: e.g. $40.39 + $40.39 = $80.78 is over an $80 limit.
     const autosave = ruleOf(policy, "wish_autosave");
-    if (autosave && action.amountCents <= autosave.maxPerPaydayCents) {
+    const savedAfter = ctx.agentSavedForWishesCents + action.amountCents;
+    if (autosave && savedAfter <= autosave.maxPerPaydayCents) {
       grant(autosave.tier, `Wish savings up to ${usd(autosave.maxPerPaydayCents)} per payday are allowed ${tierWords(autosave.tier)}.`);
     } else if (autosave) {
-      reasons.push(`This is more than your ${usd(autosave.maxPerPaydayCents)} per-payday wish savings limit.`);
+      reasons.push(`This would make ${usd(savedAfter)} saved for wishes this payday, over your ${usd(autosave.maxPerPaydayCents)} limit.`);
     }
   }
 
