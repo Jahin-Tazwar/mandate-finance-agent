@@ -129,7 +129,11 @@ export function proposeAction(personaId: string, proposed: ProposedAction, ratio
   };
 
   // Payments: which wish gets later because of this money leaving
-  if (proposed.type === "payment") action.wishImpact = getWishImpact(personaId, proposed.amountCents).impacts;
+  // (Skip: a blocked payment moves nothing, so it delays nothing: an empty list, not
+  // "the blocked $500 delays your iPhone by 91 days")
+  if (proposed.type === "payment") {
+    action.wishImpact = action.status === "denied" ? [] : getWishImpact(personaId, proposed.amountCents).impacts;
+  }
 
   // Allowed: do it now
   if (action.status === "executed") {

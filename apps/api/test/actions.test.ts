@@ -131,6 +131,7 @@ describe("agent actions: allow, ask, block", () => {
   it("a document can't add a new payee: blocked, never offered for approval", async () => {
     const action = proposeAction("daniel", { source: "untrusted", type: "payment", fromAccount: "checking", payee: "Account 99-1234", amountCents: 50_000 });
     expect(action.status).toBe("denied");
+    expect(action.wishImpact).toEqual([]); // blocked money delays no wish
     const approvals = await signedIn(app, "daniel").get("/api/personas/daniel/approvals").expect(200);
     expect(approvals.body).toEqual([]);
     const all = await signedIn(app, "daniel").get("/api/personas/daniel/actions").expect(200);

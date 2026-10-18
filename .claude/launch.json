@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "moneywise",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start"],
+      "port": 4000,
+      "env": { "AUTH_DISABLED": "false", "ANCHOR_PRIVATE_KEY": "" }
+    }
+  ]
+}

@@ -495,7 +495,7 @@ Real example (Daniel's agent proposes the power bill):
 - `type`: `payment` · `transfer` · `cancel_subscription` · `dispute` · `wish_contribution`
 - `status`: `executed` (done) · `pending_approval` (waiting for the user) · `denied` (blocked by the rules) · `rejected` (the user said no)
 - `params` by type: payment `{ fromAccount, payee, amountCents, billId? }` · transfer `{ fromAccount, toAccount, amountCents }` · wish_contribution `{ wishId, amountCents }` · cancel_subscription `{ subscriptionId, merchant }` · dispute `{ transactionId }`
-- `reasons[0]` is the deciding reason: show it on the card. `agentRationale` is `null` for the user's own actions. `wishImpact` is present on payments only (empty array if no wish is affected).
+- `reasons[0]` is the deciding reason: show it on the card. `agentRationale` is `null` for the user's own actions. `wishImpact` is present on payments only (empty array if no wish is affected, and always empty on a `denied` payment: blocked money delays nothing).
 
 ### ✅ `GET /api/personas/:personaId/approvals`
 Returns `Action[]` with `status: "pending_approval"`.
