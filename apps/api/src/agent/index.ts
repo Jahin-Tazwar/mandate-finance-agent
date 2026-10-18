@@ -63,6 +63,7 @@ export async function runChat(personaId: string, message: string, emit: Emit): P
   // Reject: no AI configured (no OpenRouter key / model in .env)
   if (!modelReady()) {
     emit("error", { error: "The AI assistant isn't set up yet (OPENROUTER_API_KEY and LLM_MODEL are missing on the server)." });
+    emit("done", {});
     return;
   }
 

@@ -45,8 +45,8 @@ export const config = {
    */
   sessionSecret: process.env.SESSION_SECRET || randomBytes(32).toString("hex"),
   /**
-   * TEMPORARY, for the few days until the frontend has its sign-in screen:
-   * AUTH_DISABLED=true lets requests without a session through. Never on in tests.
+   * Development-only escape hatch: AUTH_DISABLED=true lets requests without a
+   * session through. Never enable this on a hosted deployment.
    */
   authDisabled: process.env.AUTH_DISABLED === "true" && !process.env.VITEST,
   /** POST /api/admin/reset needs this key in the `x-admin-key` header when it's set. Read live (tests change it). */

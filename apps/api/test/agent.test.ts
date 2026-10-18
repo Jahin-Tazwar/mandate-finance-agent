@@ -179,7 +179,7 @@ describe("agent loop", () => {
 
   it("no model configured → a clear error event", async () => {
     const events = await chat("maya", "Hi");
-    expect(events[0]![0]).toBe("error");
+    expect(events.map(([event]) => event)).toEqual(["error", "done"]);
     expect(events[0]![1].error).toMatch(/isn't set up/);
   });
 
