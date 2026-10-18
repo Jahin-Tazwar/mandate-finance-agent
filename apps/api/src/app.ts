@@ -23,11 +23,12 @@ import { wishRoutes } from "./routes/wishes";
  */
 export function createApp() {
   const app = express();
-  app.use(express.json({ limit: "100kb" })); // read JSON request bodies into req.body (big bodies → 413)
 
   // Render sits in front of us and handles HTTPS; trust its "this was HTTPS" header,
   // so req.secure is true there and the session cookie gets the Secure flag
   app.set("trust proxy", 1);
+
+  app.use(express.json({ limit: "100kb" })); // read JSON request bodies into req.body (big bodies → 413)
 
   // ---- Sign-in gates (before the routes they protect) ----
   // Everything about one persona needs a session, and it must be THAT persona's session.

@@ -20,10 +20,11 @@ export const WishSchema = z.object({
     cadence: PayCadence,
     perPaydayCents: z.number().int(),
     paydaysLeft: z.number().int(),
-    nextContributionDate: IsoDate,
+    nextContributionDate: IsoDate.nullable(),
   }),
-  eta: z.object({ date: IsoDate, daysVsTarget: z.number().int().nullable() }).nullable(),
+  eta: z.object({ date: IsoDate, daysVsTarget: z.number().int() }).nullable(),
   advice: z.array(z.string()),
+  paused: z.boolean().default(false),
   createdAt: z.string(),
 });
 
@@ -138,6 +139,7 @@ function createPreview(
     targetDate: draft.targetDate,
     status,
     progressPct,
+    paused: false,
     plan: {
       cadence,
       perPaydayCents,
@@ -161,6 +163,7 @@ function localWish(draft: WishDraft, personaId: string, payCycle: { cadence: z.i
     personaId,
     priority,
     autoSave,
+    paused: false,
     createdAt: new Date().toISOString(),
   });
 }

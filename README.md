@@ -22,6 +22,7 @@ The API loads its data from the CSV files in `data/seed/` at startup (see `PRODU
 
 - Web app: http://localhost:5173
 - API: http://localhost:4000/api/health
+- Sign in with one of the public demo accounts. Chat and rule-help AI need `OPENROUTER_API_KEY` and `LLM_MODEL`; without them the app shows the server's setup message instead of pretending an AI reply succeeded.
 
 ## Deploy (Render, one web service)
 
@@ -40,7 +41,7 @@ Environment variables on Render (Settings → Environment):
 | `SESSION_SECRET` | a long random string (signs the sign-in cookies) |
 | `ADMIN_KEY` | a long random string (protects "reset demo") |
 | `OPENROUTER_API_KEY`, `LLM_MODEL`, `LLM_FALLBACK_MODEL` | for the chat agent |
-| `AUTH_DISABLED` | `true` **only until** the web app has its sign-in screen, then remove it |
+| `AUTH_DISABLED` | leave empty/false to require sign-in; `true` is for local development only and must not be enabled when hosted |
 | `ANCHOR_PRIVATE_KEY` | the **test** wallet for on-chain anchoring (create it with `npm run anchor:wallet`, copy the value from your `.env`) |
 | `LLM_ALLOW_PROVIDER_TRAINING` | `true` only while using free models in development. **Before the demo:** remove it and switch to paid models (free providers may keep prompts) |
 
