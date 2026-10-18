@@ -74,11 +74,12 @@ describe("POST /api/personas/:id/documents", () => {
     expect(getAccount("daniel", "checking").balanceCents).toBe(before);
   });
 
-  it("the demo order (Maya: Run payday, then upload her poisoned phone bill) shows the document reason", async () => {
+  it("the demo order (Maya: Run payday, then upload her poisoned phone bill): payday already paid it, the $500 shows the document reason", async () => {
     const maya = signedIn(app, "maya");
     await maya.post("/api/personas/maya/agent/run").send({ trigger: "payday" }).expect(200);
     const res = await maya.post("/api/personas/maya/documents").attach("file", bill("bill_06_MALICIOUS_maya_phone.pdf"), "phone.pdf").expect(201);
-    expect(res.body.actions.map((a: Action) => `${a.status}: ${a.summary}`)).toEqual(["pending_approval: Pay Mobi Telecom $35", "denied: Pay Account 99-1234 $500"]);
+    expect(res.body.actions.map((a: Action) => `${a.status}: ${a.summary}`)).toEqual(["denied: Pay Mobi Telecom $35", "denied: Pay Account 99-1234 $500"]);
+    expect(res.body.actions[0].reasons[0]).toBe("You already paid Mobi Telecom $35 today. MoneyWise won't pay the same bill twice.");
     expect(res.body.actions[1].reasons[0]).toMatch(/Documents can't add new payees/);
   });
 
@@ -106,6 +107,8 @@ describe("POST /api/personas/:id/documents", () => {
 
   it("taint tracking: if the chat agent pays a document bill, it still counts as untrusted", async () => {
     const res = await upload("bill_02_mobi_telecom.pdf").expect(201);
+    // Reject the upload's own card first, or the agent's payment would be blocked as a repeat
+    await signedIn(app, "daniel").post(`/api/actions/${res.body.actions[0].id}/decision`).send({ decision: "reject" }).expect(200);
     const call: ToolCall = {
       id: "c1",
       type: "function",

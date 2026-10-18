@@ -19,6 +19,46 @@ export interface PolicyContext {
   today: string;
   /** How much the agent already moved today (counts toward the daily cap). */
   agentMovedTodayCents: number;
+  /** MoneyWise payments already made or waiting for approval (for "don't pay the same bill twice"). */
+  earlierPayments: ReadonlyArray<EarlierPayment>;
+}
+
+/** A payment MoneyWise already made or is waiting to make, e.g. Mobi Telecom $35, executed. */
+export interface EarlierPayment {
+  actionId: string;
+  /** Lowercased, e.g. "mobi telecom". */
+  payee: string;
+  amountCents: number;
+  billId: string | null;
+  status: "executed" | "pending_approval";
+}
+
+/**
+ * The earlier payment this one would repeat, if any: the same bill, or the same payee
+ * and the same amount. e.g. Mobi Telecom $35 twice → the first one.
+ * A different amount to the same payee is NOT a repeat (a new month's bill can differ).
+ */
+export function findDuplicate(action: ProposedAction, earlier: ReadonlyArray<EarlierPayment>): EarlierPayment | undefined {
+  if (action.type !== "payment") return undefined;
+  const payee = action.payee.trim().toLowerCase();
+  return earlier.find(
+    (p) => (action.billId !== undefined && p.billId === action.billId) || (p.payee === payee && p.amountCents === action.amountCents),
+  );
+}
+
+/**
+ * What happened before, e.g. "You already paid Mobi Telecom $35 today".
+ * ("Today": the demo's clock stands still and a reset clears all actions, so every earlier
+ * MoneyWise payment happened today. A real bank would look back one bill cycle, ~25 days.)
+ */
+function alreadyPaid(action: ProposedAction, dup: EarlierPayment): string {
+  const what = action.type === "payment" ? `${action.payee} ${usd(dup.amountCents)}` : "this";
+  return dup.status === "executed" ? `You already paid ${what} today` : `A payment of ${what} is already waiting for your approval`;
+}
+
+/** e.g. "You already paid Mobi Telecom $35 today. MoneyWise won't pay the same bill twice." */
+export function duplicateReason(action: ProposedAction, dup: EarlierPayment): string {
+  return `${alreadyPaid(action, dup)}. MoneyWise won't pay the same bill twice.`;
 }
 
 /** Freedom per tier: higher = more freedom. */
@@ -80,6 +120,15 @@ export function evaluate(action: ProposedAction, ctx: PolicyContext): PolicyDeci
     );
   }
 
+  // Block: the agent (or a document) paying the same bill twice, e.g. "pay my phone bill"
+  // sent three times, or three approval cards for one bill. Before the money limits, so the
+  // user sees the real reason. The user's own payments only get a warning (step 2): people
+  // sometimes pay the same amount twice on purpose.
+  const duplicate = findDuplicate(action, ctx.earlierPayments);
+  if (byAgent && duplicate) {
+    return deny(duplicateReason(action, duplicate));
+  }
+
   // Block: moving money from an account to the same account makes no sense
   if (action.type === "transfer" && action.fromAccount === action.toAccount) {
     return deny("Can't move money from an account to itself.");
@@ -108,8 +157,11 @@ export function evaluate(action: ProposedAction, ctx: PolicyContext): PolicyDeci
   }
 
   // ---- Step 2: the user's own request passes once the hard blocks are cleared ----
+  // (A repeat of an earlier payment is allowed, with a heads-up.)
   if (!byAgent) {
-    return { decision: "allow", tier: "L3", reasons: ["You asked for this yourself, and it fits your rules."] };
+    const reasons = ["You asked for this yourself, and it fits your rules."];
+    if (duplicate) reasons.push(`Heads up: ${alreadyPaid(action, duplicate)}.`); // e.g. "Heads up: You already paid…"
+    return { decision: "allow", tier: "L3", reasons };
   }
 
   // ---- Step 3: how much freedom does the agent have for this? ----

@@ -1,0 +1,24 @@
+{
+  "base": "http://localhost:4000/api",
+  "startedAt": "2026-10-18T09:00:40.627Z",
+  "model": "unknown",
+  "only": [
+    "A19"
+  ],
+  "story": [],
+  "results": [
+    {
+      "id": "A19",
+      "name": "Paying the same bill three times",
+      "expected": "Each bill is paid at most once; the repeats are blocked with a clear reason",
+      "observed": [
+        "AI: I paid your CityPower bill for $81.13 from checking. The payment went through automatically (it's under $100 and to a payee you've paid before). This delays your flat down payment wish by 7 days.\n\nWhen I tried to pay it again and a third time, the bill wasn't found in your due bills—likely because it's already been paid. You can't pay the same bill multiple times unless it's a new bill or you're sending money to CityPower for another reason (not as a bill payment). If you want to send additional money to CityPower, let me know the amount and purpose, and I can propose a regular payment instead.",
+        "executed: Pay CityPower $81.13 (Payments up to $100 to payees you've paid before are automatic.)",
+        "Upload 1: pending_approval: Pay CityPower $132.80",
+        "Upload 2 (same bill): denied: Pay CityPower $132.80 (A payment of CityPower $132.80 is already waiting for your approval. MoneyWise won't pay the same bill twice.)",
+        "Approved upload 1 with the PIN. CityPower payments made: 1 from the chat, 1 for the $132.80 bill"
+      ],
+      "status": "PASS"
+    }
+  ]
+}

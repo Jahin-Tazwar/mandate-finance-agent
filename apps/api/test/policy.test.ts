@@ -31,6 +31,7 @@ const ctx: PolicyContext = {
   knownPayees: new Map([["citypower", "2026-05-15"]]),
   today: "2026-10-12",
   agentMovedTodayCents: 0,
+  earlierPayments: [],
 };
 
 const pay = (payee: string, amountCents: number, source: ProposedAction["source"] = "agent"): ProposedAction => ({

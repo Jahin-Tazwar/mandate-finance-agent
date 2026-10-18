@@ -4,7 +4,7 @@ import { config } from "../config";
 import { HttpError } from "../http/errors";
 import { usd } from "../lib/money";
 import { allTransactions, getMandate, getWish, isAgentEnabled, listAccounts, listActions } from "../store";
-import { type PolicyContext, evaluate } from "./engine";
+import { type EarlierPayment, type PolicyContext, evaluate } from "./engine";
 
 /** Gathers the facts the engine needs for one persona. */
 export function policyContext(personaId: string): PolicyContext {
@@ -28,7 +28,29 @@ export function policyContext(personaId: string): PolicyContext {
     knownPayees,
     today: config.today,
     agentMovedTodayCents: agentMovedToday(personaId),
+    earlierPayments: earlierPayments(personaId),
   };
+}
+
+/**
+ * MoneyWise payments that happened or are waiting for approval, from anyone (user, agent,
+ * document), e.g. [{ payee: "mobi telecom", amountCents: 3500, status: "executed", ... }].
+ * Like the daily cap, every action in memory happened on the demo's today.
+ */
+function earlierPayments(personaId: string): EarlierPayment[] {
+  const list: EarlierPayment[] = [];
+  for (const a of listActions(personaId)) {
+    // Skip: not a payment, or it never happened (blocked / rejected)
+    if (a.type !== "payment" || (a.status !== "executed" && a.status !== "pending_approval")) continue;
+    list.push({
+      actionId: a.id,
+      payee: String(a.params.payee).trim().toLowerCase(),
+      amountCents: Number(a.params.amountCents),
+      billId: typeof a.params.billId === "string" ? a.params.billId : null,
+      status: a.status,
+    });
+  }
+  return list;
 }
 
 /**

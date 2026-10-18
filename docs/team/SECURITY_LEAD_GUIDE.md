@@ -70,7 +70,7 @@ Send everything to the Tech Lead. If you're stuck for more than an hour, ask in 
 
 ## 3. Job 1: the attack list
 
-You get a **starter list with 18 attacks** already filled in: `attack_list_starter.csv` (open it in Excel or Google Sheets). Each row is one trick someone might try.
+You get a **starter list with 19 attacks** already filled in: `attack_list_starter.csv` (open it in Excel or Google Sheets). Each row is one trick someone might try.
 
 **What to do:**
 

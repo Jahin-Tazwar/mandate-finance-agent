@@ -138,7 +138,8 @@ describe("agent actions: allow, ask, block", () => {
   });
 
   it("the daily cap counts what the agent really moved: the 6th $99 payment is blocked", () => {
-    const statuses = Array.from({ length: 6 }, () => agentPays("daniel", "Mobi Telecom", 9_900).status);
+    // $99.00, $99.01, $99.02...: different amounts, so the duplicate rule doesn't stop them first
+    const statuses = Array.from({ length: 6 }, (_, i) => agentPays("daniel", "Mobi Telecom", 9_900 + i).status);
     expect(statuses).toEqual(["executed", "executed", "executed", "executed", "executed", "denied"]);
   });
 
@@ -154,5 +155,86 @@ describe("agent actions: allow, ask, block", () => {
     expect(log.body.map((e: { eventType: string }) => e.eventType)).toEqual(["action_approved", "action_pending_approval"]);
     const verify = await signedIn(app, "daniel").get("/api/audit/verify").expect(200);
     expect(verify.body.valid).toBe(true);
+  });
+});
+
+describe("red team: paying the same bill twice", () => {
+  const approve = (id: string) => signedIn(app, "daniel").post(`/api/actions/${id}/decision`).send({ decision: "approve", pin: "2222" }).expect(200);
+
+  it("'pay my phone bill' three times: paid once, the repeats are blocked", () => {
+    const before = checking("maya");
+    const statuses = Array.from({ length: 3 }, () => agentPays("maya", "Mobi Telecom", 3_500));
+    expect(statuses.map((a) => a.status)).toEqual(["executed", "denied", "denied"]);
+    expect(statuses[1]!.reasons[0]).toBe("You already paid Mobi Telecom $35 today. MoneyWise won't pay the same bill twice.");
+    expect(checking("maya")).toBe(before - 3_500);
+  });
+
+  it("the same name in different letter case is still the same payee", () => {
+    agentPays("maya", "Mobi Telecom", 3_500);
+    expect(agentPays("maya", "  mobi TELECOM ", 3_500).status).toBe("denied");
+  });
+
+  it("paying a bill by its id, then again without the id: paid once", () => {
+    const bill = getBills("aisha").find((b) => b.payee === "CityPower")!;
+    const before = checking("aisha");
+    const pay = (billId?: string) =>
+      proposeAction("aisha", { source: "agent", type: "payment", fromAccount: "checking", payee: bill.payee, amountCents: bill.amountCents, ...(billId ? { billId } : {}) });
+
+    expect(pay(bill.id).status).toBe("executed");
+    expect(pay().status).toBe("denied");
+    expect(() => pay(bill.id)).toThrow(); // the paid bill is gone from the list (404) or blocked: never paid twice
+    expect(checking("aisha")).toBe(before - bill.amountCents);
+  });
+
+  it("over the $100 limit three times: one approval card, the repeats are blocked", async () => {
+    const bill = getBills("daniel").find((b) => b.payee === "CityPower")!;
+    const before = checking("daniel");
+    const cards = Array.from({ length: 3 }, () =>
+      proposeAction("daniel", { source: "agent", type: "payment", fromAccount: "checking", payee: "CityPower", amountCents: 13_280, billId: bill.id }),
+    );
+    expect(cards.map((a) => a.status)).toEqual(["pending_approval", "denied", "denied"]);
+    expect(cards[1]!.reasons[0]).toMatch(/^A payment of CityPower \$132\.80 is already waiting for your approval/);
+
+    const approvals = await signedIn(app, "daniel").get("/api/personas/daniel/approvals").expect(200);
+    expect(approvals.body).toHaveLength(1);
+
+    await approve(cards[0]!.id);
+    expect(checking("daniel")).toBe(before - 13_280);
+  });
+
+  it("approval re-check: the user paid it themselves meanwhile, so approving the card moves nothing", async () => {
+    const before = checking("daniel");
+    const card = agentPays("daniel", "CityPower", 13_280);
+    expect(card.status).toBe("pending_approval");
+
+    // The user pays the same bill by hand: allowed (people sometimes mean it), with a heads-up
+    const own = proposeAction("daniel", { source: "user", type: "payment", fromAccount: "checking", payee: "CityPower", amountCents: 13_280 });
+    expect(own.status).toBe("executed");
+    expect(own.reasons[1]).toMatch(/^Heads up: A payment of CityPower \$132\.80 is already waiting/);
+
+    const res = await approve(card.id);
+    expect(res.body.status).toBe("denied");
+    expect(res.body.reasons[0]).toBe("Can't do this any more: You already paid CityPower $132.80 today. MoneyWise won't pay the same bill twice.");
+    expect(checking("daniel")).toBe(before - 13_280); // once, by the user
+  });
+
+  it("the user's own repeat payment goes through, with a heads-up", () => {
+    const pay = () => proposeAction("maya", { source: "user", type: "payment", fromAccount: "checking", payee: "Mobi Telecom", amountCents: 3_500 });
+    pay();
+    const again = pay();
+    expect(again.status).toBe("executed");
+    expect(again.reasons).toEqual(["You asked for this yourself, and it fits your rules.", "Heads up: You already paid Mobi Telecom $35 today."]);
+  });
+
+  it("a document repeating a bill that's already waiting: blocked", () => {
+    const fromDoc = () => proposeAction("daniel", { source: "untrusted", type: "payment", fromAccount: "checking", payee: "CityPower", amountCents: 13_280 });
+    expect(fromDoc().status).toBe("pending_approval");
+    expect(fromDoc().status).toBe("denied");
+  });
+
+  it("a rejected or blocked payment doesn't count: asking again later is fine", async () => {
+    const card = agentPays("daniel", "CityPower", 13_280);
+    await signedIn(app, "daniel").post(`/api/actions/${card.id}/decision`).send({ decision: "reject" }).expect(200);
+    expect(agentPays("daniel", "CityPower", 13_280).status).toBe("pending_approval");
   });
 });

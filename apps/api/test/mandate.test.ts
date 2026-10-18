@@ -78,10 +78,11 @@ describe("compile → review → sign", () => {
     const res = await maya().post("/api/personas/maya/mandate/sign").send({ naturalLanguage: text, pin: "1111" }).expect(200);
     expect(Mandate.parse(res.body)).toMatchObject({ version: 2, signedBy: "maya" });
 
-    // Now the limit is $20, so the same bill waits for approval
-    const after = proposeAction("maya", { source: "agent", type: "payment", fromAccount: "checking", payee: "Mobi Telecom", amountCents: 3_500 });
+    // Now the limit is $20, so a $30 payment waits for approval
+    // (not $35 again: that would be blocked as paying the same bill twice)
+    const after = proposeAction("maya", { source: "agent", type: "payment", fromAccount: "checking", payee: "Mobi Telecom", amountCents: 3_000 });
     expect(after.status).toBe("pending_approval");
-    expect(after.reasons[0]).toBe("$35 is over your $20 limit per payment.");
+    expect(after.reasons[0]).toBe("$30 is over your $20 limit per payment.");
   });
 
   it("a policy sent by the browser is ignored: the server compiles the text itself", async () => {

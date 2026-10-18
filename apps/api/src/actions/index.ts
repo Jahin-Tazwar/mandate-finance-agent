@@ -1,11 +1,11 @@
-import type { Action, ActionDecisionBody, ProposedAction } from "@mandate/shared";
+import type { Action, ActionDecisionBody, PolicyDecision, ProposedAction } from "@mandate/shared";
 import { getBills, getSubscriptions } from "../analytics";
 import { appendAudit } from "../audit";
 import { verifyPin } from "../auth";
 import { HttpError } from "../http/errors";
 import { shortDate } from "../lib/dates";
 import { usd } from "../lib/money";
-import { evaluate } from "../policy/engine";
+import { duplicateReason, evaluate, findDuplicate } from "../policy/engine";
 import { policyContext } from "../policy";
 import { addAction, allTransactions, getAction, getWish, listActions, nextId, updateAction } from "../store";
 import { getWishImpact } from "../wishes";
@@ -180,7 +180,16 @@ export function decideAction(personaId: string, actionId: string, body: ActionDe
   // Re-check the hard rules NOW: the balance may have changed since it was proposed.
   // The user's approval stands in for the tier check, but never for the floor or the funds.
   const proposed = proposedFrom(action);
-  const recheck = evaluate({ ...proposed, source: "user" } as ProposedAction, policyContext(personaId));
+  const ctx = policyContext(personaId);
+
+  // ...and never for paying the same bill twice: three cards for one bill, approved one by
+  // one, pay once. Only executed payments count here, so approving the FIRST card still works
+  // while the others wait. (This card itself is still pending, so it never matches itself.)
+  const paid = ctx.earlierPayments.filter((p) => p.status === "executed");
+  const duplicate = findDuplicate(proposed, paid);
+  const recheck: PolicyDecision = duplicate
+    ? { decision: "deny", tier: "L0", reasons: [duplicateReason(proposed, duplicate)] }
+    : evaluate({ ...proposed, source: "user" } as ProposedAction, ctx);
   if (recheck.decision === "deny") {
     updateAction(actionId, { status: "denied", decidedAt: now, reasons: [`Can't do this any more: ${recheck.reasons[0]}`, ...action.reasons] });
     appendAudit({

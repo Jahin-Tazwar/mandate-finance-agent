@@ -1,4 +1,4 @@
-# MoneyWise API Contract (v3.8)
+# MoneyWise API Contract (v3.9)
 
 The agreement between the backend (Tech Lead) and the frontend (Frontend Developer).
 **The frontend can build every screen today using the example responses below as mock data**, then switch to the real API as each endpoint goes live.
@@ -504,7 +504,7 @@ Returns `Action[]` with `status: "pending_approval"`.
 Request: `{ "decision": "approve", "pin": "2222" }` or `{ "decision": "reject" }` (rejecting never needs a PIN) → `200` with the updated `Action`.
 
 - Approved → `"status": "executed"` with `approvedBy`, `decidedAt` and `executedAt` set.
-- The rules are checked **again** when approving (the balance may have changed). If it would now break the floor, or there isn't enough money → `"status": "denied"` and `reasons[0]` starts with `"Can't do this any more: …"`. Show that reason.
+- The rules are checked **again** when approving (the balance may have changed). If it would now break the floor, there isn't enough money, or the same payment was already made meanwhile → `"status": "denied"` and `reasons[0]` starts with `"Can't do this any more: …"`, e.g. `"Can't do this any more: You already paid CityPower $132.80 today. MoneyWise won't pay the same bill twice."` Show that reason.
 - Wrong PIN → `403 { "error": "Wrong PIN", "attemptsLeft": 4 }`; the 5th wrong PIN → `429 { "retryAfterSeconds": 300 }`.
 - Already decided → `409`. Someone else's action → `403`. Unknown id → `404`.
 
@@ -789,6 +789,7 @@ UI (Audit log screen): a "Verified on-chain" badge with a **View transaction** l
 ---
 
 ## Changelog
+- **v3.9 (Oct 18):** new hard rule, **no duplicate payments**. The agent (or a document) can't pay the same bill twice: a payment with the same bill id, or the same payee and amount, as one already `executed` or `pending_approval` → `denied` with `reasons[0]` = `"You already paid Mobi Telecom $35 today. MoneyWise won't pay the same bill twice."` or `"A payment of CityPower $132.80 is already waiting for your approval. MoneyWise won't pay the same bill twice."` The user's own repeat payment is still `executed`, with a second reason `"Heads up: You already paid …"`. Approving re-checks it too (see `decision`). Effect on the demo: after **Run payday** has paid Maya's $35 phone bill, uploading her phone bill shows that $35 card as **denied** ("already paid"), not waiting.
 - **v3.8 (Oct 17):** product renamed **MoneyWise** (the signed rules are still "your mandate" and the `/mandate` endpoints keep their names). `GET /api/health` → `"service": "moneywise-api"`; on-chain text is now `moneywise-audit:v1:…`; executed transactions' memo says `MoneyWise act_N`. When a document asks to pay someone new, that reason now comes first even if a money limit would also block it. New demo bill for Maya.
 - **v3.7 (Oct 16):** on-chain anchors are live: `GET anchors`, `GET anchors/status`, `POST audit/anchor`, `GET anchors/:txHash/check`. An anchor is the log's latest entry (`seq` + `hash`), not a daily Merkle root (the hash chain already covers every earlier entry).
 - **v3.6 (Oct 16):** `mandate/compile` gains `notUnderstood`. New `POST mandate/explain`: AI explains sentences the checker didn't understand and suggests rewrites, each checked by the checker before it's shown (saves nothing).
