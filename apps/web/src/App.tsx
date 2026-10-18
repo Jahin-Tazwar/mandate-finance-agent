@@ -13,7 +13,7 @@ import { Overview } from "./pages/OverviewPage";
 import { SubscriptionsView } from "./pages/SubscriptionsPage";
 import { TransactionsView } from "./pages/TransactionsPage";
 import { WishesPage } from "./pages/WishesPage";
-import { Icon, categoryNames, formatMoney, useResource, type View } from "./pages/shared";
+import { Icon, categoryNames, formatDate, formatMoney, useResource, type View } from "./pages/shared";
 import { connectTimeline } from "./lib/sse";
 
 
@@ -134,6 +134,8 @@ function App() {
   const mandate = useResource(root ? `${root}/mandate` : null, parseMandate, refreshKey);
   const floorRule = mandate.status === "success" ? mandate.data.policy.rules.find((rule) => rule.type === "balance_floor" && rule.account === "checking") : undefined;
   const checkingFloorCents = floorRule?.type === "balance_floor" ? floorRule.minCents : undefined;
+  // The demo's fixed "today" (the forecast starts on it), e.g. "2026-10-12"
+  const demoToday = forecast.status === "success" ? forecast.data.days[0]?.date : undefined;
   const subscriptions = useResource(root ? `${root}/subscriptions` : null, parseSubscriptions, refreshKey);
   const approvals = useResource(root ? `${root}/approvals` : null, parseActions, refreshKey);
   const killSwitch = useResource(root ? `${root}/killswitch` : null, parseKillSwitch, refreshKey);
@@ -344,7 +346,7 @@ function App() {
       <div className="main-shell">
         <header className="topbar">
           <div className="mobile-brand"><span className="brand-mark"><Icon name="shield" size={18} /></span><strong>MoneyWise<span className="brand-period">.</span></strong></div>
-          <div className="topbar-context"><span className="context-label">YOUR FINANCES</span><span className="context-divider">/</span><span>{viewLabels[view]}</span></div>
+          <div className="topbar-context"><span className="context-label">YOUR FINANCES</span><span className="context-divider">/</span><span>{viewLabels[view]}</span>{demoToday && <span className="demo-date" title="The demo runs on a fixed date so the numbers stay the same. Times in the audit log are the real time.">Demo date: {formatDate(demoToday, { month: "short", day: "numeric", year: "numeric" })}</span>}</div>
           <div className="topbar-actions">
             <button className="button button-secondary payday-button" onClick={() => void runPaydayNow()}>Run payday</button>
             <button className={`agent-switch ${killSwitch.status === "success" && !killSwitch.data.enabled ? "agent-on" : "agent-off"}`} onClick={toggleAgent} disabled={killSwitch.status !== "success"} aria-pressed={killSwitch.status === "success" && !killSwitch.data.enabled} title="Turn the agent off instantly; turning it back on requires your PIN">
@@ -362,9 +364,9 @@ function App() {
         </header>
 
         <main className="page-content">
-          {untrustedWarning && <div className="global-injection-warning" role="alert"><strong>Security warning: a document tried to make a payment.</strong><span>It was treated as untrusted and the policy engine blocked the unsafe request. Nothing moved.</span><button className="text-button" onClick={() => setUntrustedWarning(false)} aria-label="Dismiss security warning">Dismiss</button></div>}
+          {untrustedWarning && <div className="global-injection-warning" role="alert"><strong>Security warning: a document tried to make a payment.</strong><span>It was treated as untrusted and your rules blocked the unsafe request. Nothing moved.</span><button className="text-button" onClick={() => setUntrustedWarning(false)} aria-label="Dismiss security warning">Dismiss</button></div>}
           {view === "overview" && <Overview persona={selectedPersona} accounts={accounts} budget={budget} forecast={forecast} payCycle={payCycle} bills={bills} floorCents={checkingFloorCents} subscriptions={subscriptions} transactions={recentTransactions} accountNames={accountNames} onNavigate={navigate} onOpenWish={openWish} pendingApprovals={approvals.status === "success" ? approvals.data.length : 0} onUpload={() => setUploadOpen(true)} />}
-          {(view === "wishes" || view === "wishNew" || view === "wishDetail" || view === "wishEdit") && <WishesPage persona={selectedPersona} payCycle={payCycle} view={view} wishId={wishId} onNavigate={navigate} onOpenWish={openWish} onEditWish={editWish} />}
+          {(view === "wishes" || view === "wishNew" || view === "wishDetail" || view === "wishEdit") && <WishesPage persona={selectedPersona} payCycle={payCycle} view={view} wishId={wishId} onNavigate={navigate} onOpenWish={openWish} onEditWish={editWish} today={demoToday} />}
           {view === "transactions" && <TransactionsView persona={selectedPersona} resource={transactionResource} items={visibleTransactions} loadedCount={transactionItems.length} onLoadMore={() => setTransactionOffset(transactionItems.length)} accountNames={accountNames} search={search} onSearch={setSearch} category={categoryFilter} onCategory={setCategoryFilter} />}
           {view === "subscriptions" && <SubscriptionsView persona={selectedPersona} resource={subscriptions} />}
           {view === "bills" && <BillsView persona={selectedPersona} resource={bills} asOfDate={forecast.status === "success" ? forecast.data.days.at(0)?.date : undefined} onUpload={() => setUploadOpen(true)} />}

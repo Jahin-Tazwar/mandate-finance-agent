@@ -3,8 +3,8 @@ import type { PayCycle, Persona, WishDetail as WishDetailData } from "@mandate/s
 import { contributeWish, deleteWish, getWish, patchWish } from "../lib/api";
 
 
-import { categoryLabel, createWish, describeCadence, getWishes, previewWish, statusLabel, WishSchema, updateWish, type Wish, type WishDraft, type WishList, type WishPreview } from "../lib/wishes";
-import { Icon, PanelState, formatMoney, formatDate, errorText, type Resource, type View, useResource } from "./shared";
+import { categoryLabel, createWish, describeCadence, etaWords, getWishes, previewWish, statusHelp, statusLabel, WishSchema, updateWish, type Wish, type WishDraft, type WishList, type WishPreview } from "../lib/wishes";
+import { CHART, Icon, PanelState, chartPosition, formatMoney, formatDate, errorText, type Resource, type View, useResource } from "./shared";
 
 function localDateInputValue(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -35,9 +35,12 @@ export function WishesPage({
   onNavigate,
   onOpenWish,
   onEditWish,
+  today,
 }: {
   persona: Persona;
   payCycle: ReturnType<typeof useResource<PayCycle>>;
+  /** The demo's "today", e.g. "2026-10-12" (the savings chart starts there). */
+  today?: string;
   view: Extract<View, "wishes" | "wishNew" | "wishDetail" | "wishEdit">;
   wishId: string | null;
   onNavigate: (view: View) => void;
@@ -90,7 +93,7 @@ export function WishesPage({
     if (view === "wishEdit") {
       return <WishForm persona={persona} payCycle={payCycle.data} priority={selectedWish.priority} initialWish={selectedWish} onCancel={() => onOpenWish(selectedWish.id)} onCreated={(wish) => { reloadWishes(); onOpenWish(wish.id); }} />;
     }
-    return <WishDetail wish={selectedWish} persona={persona} payday={payCycle.data.payday} onBack={() => onNavigate("wishes")} onEdit={() => onEditWish(selectedWish.id)} onRefresh={reloadWishes} onDeleted={() => onNavigate("wishes")} />;
+    return <WishDetail wish={selectedWish} persona={persona} payday={payCycle.data.payday} today={today} onBack={() => onNavigate("wishes")} onEdit={() => onEditWish(selectedWish.id)} onRefresh={reloadWishes} onDeleted={() => onNavigate("wishes")} />;
   }
 
   if (wishResource.status === "loading") {
@@ -125,21 +128,20 @@ export function WishesPage({
 
 export function WishCard({ wish, currency, payday, onClick }: { wish: Wish; currency: string; payday: string; onClick: () => void }) {
   const percentage = Math.min(Math.max(wish.progressPct, 0), 100);
-  const etaText = wish.eta?.daysVsTarget === null || !wish.eta
-    ? "ETA unavailable"
-    : wish.eta.daysVsTarget === 0
-      ? "On target date"
-      : `${Math.abs(wish.eta.daysVsTarget)}d ${wish.eta.daysVsTarget < 0 ? "early" : "late"}`;
+  const etaText = etaWords(wish.eta);
+  // Needs more than it gets (e.g. Kyoto: needs $26.00, gets the $6.67 that's left): say both
+  const gets = wish.plan.affordablePerPaydayCents ?? wish.plan.perPaydayCents;
+  const shortfall = gets < wish.plan.perPaydayCents;
   return (
     <button className="wish-card surface" onClick={onClick}>
       <div className={`wish-art wish-art-${wish.category}`}><span>{wish.category === "travel" ? "↗" : wish.category === "vehicle" ? "⌁" : wish.category === "property" ? "⌂" : wish.category === "education" ? "▤" : wish.category === "gadget" ? "▣" : wish.category === "luxury" ? "✦" : "◌"}</span><span className="wish-category">{categoryLabel(wish.category)}</span></div>
       <div className="wish-card-content">
-        <div className="wish-card-progress"><strong>{Math.round(percentage)}<small>%</small></strong><span className={`wish-status wish-status-${wish.status}`}>{statusLabel(wish.status)}</span></div>
+        <div className="wish-card-progress"><strong>{Math.round(percentage)}<small>%</small></strong><span className={`wish-status wish-status-${wish.status}`} title={statusHelp(wish.status)}>{statusLabel(wish.status)}</span></div>
         <h2>{wish.title}</h2>
         <p className="wish-saved">{formatMoney(wish.savedCents, currency)} <span>of {formatMoney(wish.targetCents, currency)}</span></p>
         <div className="wish-progress-track"><span style={{ width: `${percentage}%` }} /></div>
-        <div className="wish-cadence">{wish.status === "achieved" ? "Goal reached" : describeCadence(wish.plan.cadence, payday, wish.plan.perPaydayCents)}</div>
-        <div className="wish-card-meta"><span>Target {formatDate(wish.targetDate, { month: "short", day: "numeric", year: "numeric" })}</span>{wish.status !== "achieved" && <strong>{etaText}</strong>}</div>
+        <div className="wish-cadence">{wish.status === "achieved" ? "Goal reached" : shortfall ? `Needs ${describeCadence(wish.plan.cadence, payday, wish.plan.perPaydayCents)} · gets ${formatMoney(gets, currency)}` : describeCadence(wish.plan.cadence, payday, wish.plan.perPaydayCents)}</div>
+        <div className="wish-card-meta"><span>Target {formatDate(wish.targetDate, { month: "short", day: "numeric", year: "numeric" })}</span>{wish.status !== "achieved" && <strong title={wish.eta ? `At ${formatMoney(gets, currency)} each payday you'd reach it on ${formatDate(wish.eta.date, { month: "short", day: "numeric", year: "numeric" })}.` : undefined}>{etaText}</strong>}</div>
         {wish.autoSave && <span className="auto-save-tag"><Icon name="check" size={12} /> Auto-save on</span>}
       </div>
       <span className="wish-card-arrow"><Icon name="arrow" size={16} /></span>
@@ -280,10 +282,11 @@ export function WishPlanPanel({ preview, payday, surplus, currency }: {
   );
 }
 
-export function WishDetail({ wish: initialWish, persona, payday, onBack, onEdit, onRefresh, onDeleted }: {
+export function WishDetail({ wish: initialWish, persona, payday, today, onBack, onEdit, onRefresh, onDeleted }: {
   wish: Wish;
   persona: Persona;
   payday: string;
+  today?: string;
   onBack: () => void;
   onEdit: () => void;
   onRefresh: () => void;
@@ -343,35 +346,135 @@ export function WishDetail({ wish: initialWish, persona, payday, onBack, onEdit,
     finally { setBusy(false); }
   };
   const projectedPoints = detail?.projection ?? [];
-  const projectedMax = Math.max(wish.targetCents, ...projectedPoints.map((point) => point.savedCents), 1);
-  const projectedLine = projectedPoints.map((point, index) => `${8 + index / Math.max(projectedPoints.length - 1, 1) * 284},${92 - point.savedCents / projectedMax * 78}`).join(" ");
+  // Needs more than it gets (e.g. Kyoto: needs $26.00, gets the $6.67 that's left): say both
+  const gets = wish.plan.affordablePerPaydayCents ?? wish.plan.perPaydayCents;
+  const shortfall = gets < wish.plan.perPaydayCents && wish.status !== "achieved" && wish.status !== "paused";
   return (
     <div className="page-stack wish-detail-page">
       <button className="back-link" onClick={onBack}>← Your wishes</button>
       <section className="surface wish-detail-hero">
         <div className={`wish-detail-art wish-art-${wish.category}`}>{wish.category === "travel" ? "↗" : wish.category === "vehicle" ? "⌁" : wish.category === "property" ? "⌂" : wish.category === "gadget" ? "▣" : "✦"}</div>
-        <div className="wish-detail-copy"><span className="eyebrow">{categoryLabel(wish.category).toUpperCase()} · SAVINGS GOAL</span><h1>{wish.title}<span className="title-dot">.</span></h1><div className="wish-detail-meta"><span className={`wish-status wish-status-${wish.status}`}>{statusLabel(wish.status)}</span><span>Target {formatDate(wish.targetDate, { month: "short", day: "numeric", year: "numeric" })}</span></div></div>
+        <div className="wish-detail-copy"><span className="eyebrow">{categoryLabel(wish.category).toUpperCase()} · SAVINGS GOAL</span><h1>{wish.title}<span className="title-dot">.</span></h1><div className="wish-detail-meta"><span className={`wish-status wish-status-${wish.status}`} title={statusHelp(wish.status)}>{statusLabel(wish.status)}</span><span>Target {formatDate(wish.targetDate, { month: "short", day: "numeric", year: "numeric" })}</span></div></div>
         <button className="button button-secondary wish-edit-button" onClick={onEdit}>Edit wish</button>
       </section>
       <section className="surface wish-detail-progress">
         <div className="detail-progress-head"><div><span className="eyebrow">SAVED SO FAR</span><strong>{formatMoney(wish.savedCents, persona.currency)} <small>of {formatMoney(wish.targetCents, persona.currency)}</small></strong></div><strong className="detail-percent">{Math.round(percentage)}%</strong></div>
         <div className="wish-progress-track"><span style={{ width: `${percentage}%` }} /></div>
-        <div className="detail-progress-foot"><span>{formatMoney(Math.max(wish.targetCents - wish.savedCents, 0), persona.currency)} left to go</span><span>{wish.plan.paydaysLeft} paydays in your plan</span></div>
+        <div className="detail-progress-foot"><span>{formatMoney(Math.max(wish.targetCents - wish.savedCents, 0), persona.currency)} left to go</span><span>{wish.plan.paydaysLeft} paydays until your target date</span></div>
       </section>
-      {projectedPoints.length > 0 && <section className="surface wish-projection-panel"><span className="eyebrow">PROJECTED SAVINGS</span><h2>Progress by payday</h2><svg viewBox="0 0 300 105" role="img" aria-label="Projected savings progress by payday"><line x1="8" x2="292" y1="92" y2="92" stroke="#e8e8f0" /><line x1="8" x2="292" y1={92 - wish.targetCents / projectedMax * 78} y2={92 - wish.targetCents / projectedMax * 78} stroke="#d8d9e9" strokeDasharray="4 4" /><polyline points={projectedLine} fill="none" stroke="#6872e6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg></section>}
+      {projectedPoints.length > 0 && <section className="surface wish-projection-panel"><span className="eyebrow">PROJECTED SAVINGS</span><h2>Progress by payday</h2><WishProjection wish={wish} points={projectedPoints} currency={persona.currency} payday={payday} today={today} /></section>}
       <section className="content-grid wish-detail-grid">
-        <article className="surface detail-plan-card"><span className="eyebrow">YOUR SAVING RHYTHM</span><h2>{wish.status === "achieved" ? "You made it!" : describeCadence(wish.plan.cadence, payday, wish.plan.perPaydayCents)}</h2><p>{wish.autoSave ? "Automatic saving is turned on for this wish." : "Automatic saving is off for this wish."}</p><div className="detail-plan-row"><span>Next planned payday</span><strong>{wish.plan.nextContributionDate ? formatDate(wish.plan.nextContributionDate, { weekday: "short", month: "short", day: "numeric" }) : "No contribution planned"}</strong></div><div className="detail-plan-row"><span>Estimated finish</span><strong>{wish.eta ? formatDate(wish.eta.date, { month: "short", day: "numeric", year: "numeric" }) : "Not yet reachable"}</strong></div>
+        <article className="surface detail-plan-card"><span className="eyebrow">YOUR SAVING RHYTHM</span><h2>{wish.status === "achieved" ? "You made it!" : describeCadence(wish.plan.cadence, payday, shortfall ? gets : wish.plan.perPaydayCents)}{shortfall && <small className="wish-need-note"> what you can afford now</small>}</h2>{shortfall && <p className="wish-need-line">To be ready by {formatDate(wish.targetDate, { month: "short", day: "numeric", year: "numeric" })} you'd need {describeCadence(wish.plan.cadence, payday, wish.plan.perPaydayCents)}.</p>}<p>{wish.autoSave ? "Automatic saving is turned on for this wish." : "Automatic saving is off for this wish."}</p><div className="detail-plan-row"><span>Next planned payday</span><strong>{wish.plan.nextContributionDate ? formatDate(wish.plan.nextContributionDate, { weekday: "short", month: "short", day: "numeric" }) : "No contribution planned"}</strong></div><div className="detail-plan-row"><span>Estimated finish</span><strong>{wish.eta ? formatDate(wish.eta.date, { month: "short", day: "numeric", year: "numeric" }) : "Not yet reachable"}</strong></div>
           {!localOnly && <><button className="button button-secondary wish-action-button" disabled={busy} onClick={() => void update({ autoSave: !wish.autoSave })}>{wish.autoSave ? "Turn auto-save off" : "Turn auto-save on"}</button><button className="button button-secondary wish-action-button" disabled={busy} onClick={() => void update({ paused: !wish.paused })}>{wish.paused ? "Resume wish" : "Pause wish"}</button></>}
         </article>
         <article className="surface detail-advice-card"><span className="eyebrow">PLAN NOTES</span><h2>A plan that fits your life</h2>{wish.advice.length ? <ul>{wish.advice.map((note) => <li key={note}><span><Icon name="spark" size={14} /></span>{note}</li>)}</ul> : <p>Your wish is on its way. Check back as your savings grow.</p>}</article>
       </section>
-      {!localOnly && <section className="surface wish-contribution-panel"><div className="section-heading"><div><span className="eyebrow">OPTIONAL TOP-UP</span><h2>Add money now</h2></div></div><form className="contribute-form" onSubmit={(event) => void contribute(event)}><label className="form-field"><span>Amount</span><span className="money-input"><span>$</span><input inputMode="decimal" value={amount} onChange={(event) => setAmount(sanitizeMoneyInput(event.target.value))} placeholder="20.00" /></span></label><button className="button button-primary" disabled={busy || !amount}>{busy ? "Processing…" : "Add money"}</button></form><p>Top-ups go through your rules. Money moves only if policy allows it.</p></section>}
+      {!localOnly && <section className="surface wish-contribution-panel"><div className="section-heading"><div><span className="eyebrow">OPTIONAL TOP-UP</span><h2>Add money now</h2></div></div><form className="contribute-form" onSubmit={(event) => void contribute(event)}><label className="form-field"><span>Amount</span><span className="money-input"><span>$</span><input inputMode="decimal" value={amount} onChange={(event) => setAmount(sanitizeMoneyInput(event.target.value))} placeholder="20.00" /></span></label><button className="button button-primary" disabled={busy || !amount}>{busy ? "Processing…" : "Add money"}</button></form><p>Top-ups go through your rules. Money moves only if your rules allow it.</p></section>}
       {localOnly && <div className="notice-card"><span className="notice-icon"><Icon name="shield" size={17} /></span><span><strong>Device-only wish.</strong> This plan is stored in this browser and does not move money or trigger an action.</span></div>}
       {detail && <section className="surface wish-history-panel"><div className="section-heading"><div><span className="eyebrow">SAVING HISTORY</span><h2>Contributions</h2></div></div>{detail.contributions.length ? detail.contributions.map((item) => <div className="detail-plan-row" key={item.id}><span>{formatDate(item.date, { month: "short", day: "numeric" })} · {item.source === "agent" ? "Agent auto-save" : "You"}</span><strong>+{formatMoney(item.amountCents, persona.currency)}</strong></div>) : <div className="empty-note">No contributions yet.</div>}</section>}
       {error && <div className="form-error-banner" role="alert">{error}</div>}
       {actionMessage && <div className="notice-card" role="status">{actionMessage}</div>}
       {!localOnly && <button className="text-button delete-wish-button" disabled={busy} onClick={() => void remove()}>Delete wish · money already saved stays in savings</button>}
-      <div className="notice-card"><span className="notice-icon"><Icon name="shield" size={17} /></span><span><strong>Your money stays yours.</strong> Saving {describeCadence(wish.plan.cadence, payday, wish.plan.perPaydayCents)} is a plan—not a transfer. Money moves only when your backend policy allows it.</span></div>
+      <div className="notice-card"><span className="notice-icon"><Icon name="shield" size={17} /></span><span><strong>Your money stays yours.</strong> Saving {describeCadence(wish.plan.cadence, payday, shortfall ? gets : wish.plan.perPaydayCents)} is a plan, not a transfer. Money moves only when your rules allow it.</span></div>
+    </div>
+  );
+}
+
+/**
+ * Projected savings for one wish: what's saved today, then one point per payday at what it
+ * really gets, the goal line, and the target date as a vertical line.
+ * e.g. Kyoto: $240 now → $500 on Jul 9, 2027, well after the Dec 20 target.
+ */
+function WishProjection({ wish, points, currency, payday, today }: {
+  wish: Wish;
+  points: { date: string; savedCents: number }[];
+  currency: string;
+  payday: string;
+  today?: string;
+}) {
+  const [active, setActive] = useState<number | null>(null);
+
+  // Start at today with what's already saved (the API's points start at the next payday)
+  const series = today && points[0] && points[0].date > today ? [{ date: today, savedCents: wish.savedCents }, ...points] : points;
+  const time = (date: string) => new Date(`${date}T12:00:00`).getTime();
+  const start = time(series[0]!.date);
+  const end = Math.max(time(series.at(-1)!.date), time(wish.targetDate));
+  const xAt = (date: string) => CHART.left + ((time(date) - start) / Math.max(end - start, 1)) * (CHART.right - CHART.left);
+  const yAt = (cents: number) => CHART.bottom - (Math.min(cents, wish.targetCents) / Math.max(wish.targetCents, 1)) * (CHART.bottom - CHART.top);
+  const line = series.map((point) => `${xAt(point.date)},${yAt(point.savedCents)}`).join(" ");
+  const last = series.at(-1)!;
+  const reached = last.savedCents >= wish.targetCents;
+
+  // e.g. "Saving $6.67 every Friday, you reach $500.00 on Jul 9, 2027: 201 days after your target date."
+  const gets = wish.plan.affordablePerPaydayCents ?? wish.plan.perPaydayCents;
+  const vsTarget = wish.eta?.daysVsTarget ?? 0;
+  const when = vsTarget > 0 ? `: ${vsTarget} days after your target date` : vsTarget < 0 ? `: ${-vsTarget} days before your target date` : ", right on your target date";
+  const sentence = reached && wish.eta
+    ? `Saving ${describeCadence(wish.plan.cadence, payday, gets)}, you reach ${formatMoney(wish.targetCents, currency)} on ${formatDate(wish.eta.date, { month: "short", day: "numeric", year: "numeric" })}${when}.`
+    : `Saving ${describeCadence(wish.plan.cadence, payday, gets)}, this is how your savings grow.`;
+
+  // The point under the pointer: the nearest one across the chart
+  const pick = (clientX: number, box: DOMRect) => {
+    const x = ((clientX - box.left) / box.width) * CHART.width;
+    let best = 0;
+    series.forEach((point, index) => { if (Math.abs(xAt(point.date) - x) < Math.abs(xAt(series[best]!.date) - x)) best = index; });
+    setActive(best);
+  };
+  const shown = active === null ? null : series[active]!;
+
+  return (
+    <div className="chart-wrap">
+      <p className="chart-explainer">{sentence}</p>
+      <div
+        className="chart-plot"
+        role="img"
+        tabIndex={0}
+        aria-label={`${sentence} Use the arrow keys to read each payday.`}
+        onPointerMove={(event) => pick(event.clientX, event.currentTarget.getBoundingClientRect())}
+        onPointerDown={(event) => pick(event.clientX, event.currentTarget.getBoundingClientRect())}
+        onPointerLeave={() => setActive(null)}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowRight") setActive((index) => Math.min((index ?? -1) + 1, series.length - 1));
+          if (event.key === "ArrowLeft") setActive((index) => Math.max((index ?? 1) - 1, 0));
+        }}
+        onFocus={() => setActive(0)}
+        onBlur={() => setActive(null)}
+      >
+        <svg className="balance-chart" viewBox={`0 0 ${CHART.width} ${CHART.height}`} preserveAspectRatio="none" aria-hidden="true">
+          <path d={`M ${line.replaceAll(" ", " L ")} L ${xAt(last.date)},${CHART.bottom} L ${CHART.left},${CHART.bottom} Z`} fill="#6974e8" fillOpacity=".12" />
+          <line className="chart-floor-line" x1={CHART.left} x2={CHART.right} y1={yAt(wish.targetCents)} y2={yAt(wish.targetCents)} vectorEffect="non-scaling-stroke" />
+          <line className="chart-target-line" x1={xAt(wish.targetDate)} x2={xAt(wish.targetDate)} y1={CHART.top - 14} y2={CHART.bottom} vectorEffect="non-scaling-stroke" />
+          <polyline points={line} fill="none" stroke="#6872e6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          {shown && <line className="chart-guide" x1={xAt(shown.date)} x2={xAt(shown.date)} y1={CHART.top - 8} y2={CHART.bottom} vectorEffect="non-scaling-stroke" />}
+        </svg>
+
+        {/* The goal (on its line) and the target date (on its vertical line) */}
+        <span className="chart-label chart-label-floor" style={chartPosition(CHART.right, yAt(wish.targetCents))}>Goal {formatMoney(wish.targetCents, currency)}</span>
+        <span className="chart-label chart-label-target" style={chartPosition(xAt(wish.targetDate), CHART.top - 14)}>Your target · {formatDate(wish.targetDate, { month: "short", day: "numeric" })}</span>
+
+        <span className="chart-marker chart-marker-lowest" style={chartPosition(xAt(series[0]!.date), yAt(series[0]!.savedCents))} />
+        {reached && <span className="chart-marker chart-marker-pay" style={chartPosition(xAt(last.date), yAt(last.savedCents))} />}
+        {shown && <span className="chart-marker chart-marker-active" style={chartPosition(xAt(shown.date), yAt(shown.savedCents))} />}
+
+        {/* The hover box, e.g. "Fri, Oct 23 · $253.34 saved · 51% of your goal" */}
+        {shown && (
+          <div className={`chart-tooltip ${xAt(shown.date) > CHART.width / 2 ? "chart-tooltip-left" : ""}`} style={chartPosition(xAt(shown.date), CHART.top)} role="status">
+            <span>{formatDate(shown.date, { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
+            <strong>{formatMoney(shown.savedCents, currency)} saved</strong>
+            <small>{Math.min(100, Math.round((shown.savedCents / Math.max(wish.targetCents, 1)) * 100))}% of your goal</small>
+            {active === 0 && <small>Saved so far</small>}
+            {shown.savedCents >= wish.targetCents && <small>Goal reached</small>}
+            {shown.date > wish.targetDate && shown.savedCents < wish.targetCents && <small className="chart-tooltip-warning">After your target date</small>}
+          </div>
+        )}
+      </div>
+      <div className="chart-axis"><span>Today · {formatDate(series[0]!.date)}</span><span>{formatDate(new Date(end).toISOString().slice(0, 10), { month: "short", year: "numeric" })}</span></div>
+      <div className="chart-legend">
+        <span><i className="chart-marker-lowest" /> Saved so far</span>
+        {reached && <span><i className="chart-marker-pay" /> Goal reached</span>}
+        <span><i className="chart-legend-target" /> Your target date</span>
+        <span className="chart-legend-hint">Hover or tap to see each payday</span>
+      </div>
     </div>
   );
 }

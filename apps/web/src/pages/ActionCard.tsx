@@ -4,6 +4,10 @@ import { type Action } from "@mandate/shared";
 
 
 
+/** The permission tiers in words, e.g. "L2" → "asks you first". */
+const TIER_WORDS: Record<Action["tier"], string> = { L0: "not allowed", L1: "suggestion only", L2: "asks you first", L3: "allowed on its own" };
+const TIER_HELP = "Permission tiers, set by your rules: L3 = done on its own · L2 = asks you first · L1 = suggestion only · L0 = not allowed.";
+
 export function ActionCard({
   action,
   onApprove,
@@ -24,7 +28,7 @@ export function ActionCard({
     <article className={`action-card action-${action.status} ${action.source === "untrusted" ? "action-untrusted" : ""}`}>
       {action.source === "untrusted" && <div className="untrusted-warning">This came from a document. Check it carefully.</div>}
       <div className="action-card-heading">
-        <div><span className={`status-pill status-${action.status}`}>{statusLabels[action.status]}</span><span className="action-tier">{action.tier} · {action.source === "agent" ? "Agent" : action.source === "user" ? "You" : "Untrusted document"}</span></div>
+        <div><span className={`status-pill status-${action.status}`}>{statusLabels[action.status]}</span><span className="action-tier" title={TIER_HELP}>{action.tier} · {TIER_WORDS[action.tier]} · {action.source === "agent" ? "Agent" : action.source === "user" ? "You" : "Untrusted document"}</span></div>
         <button type="button" className="text-button" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>{expanded ? "Less detail" : "Why?"}</button>
       </div>
       <h3>{action.summary}</h3>

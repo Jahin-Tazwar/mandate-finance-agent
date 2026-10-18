@@ -73,9 +73,9 @@ export function Overview({
 
       <section className="hero-grid">
         <article className="safe-card">
-          <div className="safe-card-top"><span className="safe-icon"><Icon name="spark" size={19} /></span><span className="safe-label">SAFE TO SPEND TODAY</span><span className="info-mark" title="Calculated from your balance, upcoming bills, and typical spending">i</span></div>
+          <div className="safe-card-top"><span className="safe-icon"><Icon name="spark" size={19} /></span><span className="safe-label">SAFE TO SPEND TODAY</span><span className="info-mark" title="The tightest day in the next 30 days decides: planned checking balance on that day, minus your floor, divided by the days until then.">i</span></div>
           <PanelState resource={budget} onRetry={budget.retry} label="Spending plan" />
-          {budget.status === "success" && <><div className="safe-amount">{formatMoney(budget.data.safeToSpendTodayCents, persona.currency)}</div><p className="safe-caption">After your regular spending and upcoming commitments</p></>}
+          {budget.status === "success" && <><div className="safe-amount">{formatMoney(budget.data.safeToSpendTodayCents, persona.currency)}</div><p className="safe-caption">Per day for everyday spending. Spend up to this each day and checking stays above your {floorCents !== undefined ? formatMoney(floorCents, persona.currency) : "safety"} floor after your bills and pay.</p></>}
           <div className="safe-card-foot">
             <span className="safe-foot-icon"><Icon name="calendar" size={16} /></span>
             <span>{payCycle.status === "success" ? <>Next payday <strong>{formatDate(payCycle.data.nextPayday, { weekday: "short", month: "short", day: "numeric" })}</strong></> : <PanelState resource={payCycle} onRetry={payCycle.retry} label="Payday" />}</span>

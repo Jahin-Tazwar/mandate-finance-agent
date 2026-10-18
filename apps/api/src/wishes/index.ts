@@ -60,7 +60,7 @@ function planAll(personaId: string, draft?: WishFields): { planned: Planned[]; d
   let draftPreview: WishPreview | undefined;
   for (const item of queue) {
     const fields = "draft" in item ? item.draft : item;
-    const { preview, paceCents } = planWish(fields, { payCycle, today, availableCents: left, topExtraCategory: extra });
+    const { preview, paceCents } = planWish(fields, { payCycle, today, availableCents: left, usualSurplusCents: surplus, topExtraCategory: extra });
     left -= paceCents;
 
     if ("draft" in item) draftPreview = preview;

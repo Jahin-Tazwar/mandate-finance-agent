@@ -174,6 +174,12 @@ export function PanelState({ resource, onRetry, label }: { resource: Resource<un
   return null;
 }
 
+/**
+ * Where a point of a chart drawing sits, in % of the chart box, e.g. x 300 → left "50%".
+ * Dots and labels are HTML placed on top of the drawing, so text stays readable on phones.
+ */
+export const chartPosition = (x: number, y: number) => ({ left: `${(x / CHART.width) * 100}%`, top: `${(y / CHART.height) * 100}%` });
+
 /** One day of the forecast, with what happens on it (for the markers and the hover box). */
 interface ChartDay {
   date: string;
@@ -185,7 +191,7 @@ interface ChartDay {
 }
 
 // The drawing's own units (the SVG viewBox); labels and dots are placed in % of these
-const CHART = { width: 600, height: 170, left: 6, right: 594, top: 22, bottom: 142 };
+export const CHART = { width: 600, height: 170, left: 6, right: 594, top: 22, bottom: 142 };
 
 /**
  * The 30-day balance forecast: checking balance each day, the safety floor, paydays and bills.
@@ -207,8 +213,7 @@ export function BalanceChart({ forecast, currency, floorCents, bills = [] }: { f
   const range = Math.max(high - low, 1);
   const xAt = (index: number) => CHART.left + (index / Math.max(days.length - 1, 1)) * (CHART.right - CHART.left);
   const yAt = (cents: number) => CHART.bottom - ((cents - low) / range) * (CHART.bottom - CHART.top);
-  // e.g. x 300 → left "50%": dots and labels are HTML on top of the drawing, so text stays readable on phones
-  const at = (x: number, y: number) => ({ left: `${(x / CHART.width) * 100}%`, top: `${(y / CHART.height) * 100}%` });
+  const at = chartPosition;
 
   const points = days.map((day, index) => `${xAt(index)},${yAt(day.balanceCents)}`).join(" ");
   const lowestIndex = Math.max(days.findIndex((day) => day.date === forecast.lowestPoint.date), 0);
@@ -300,7 +305,7 @@ export function TransactionRow({ transaction, currency, account }: { transaction
     <div className="transaction-row">
       <div className={`category-icon category-${category}`} aria-hidden="true">{categoryIcons[category] ?? "·"}</div>
       <div className="transaction-main">
-        <strong>{transaction.merchant || transaction.description}</strong>
+        <strong>{transactionTitle(transaction)}</strong>
         <span>{transaction.description !== transaction.merchant ? transaction.description : categoryNames[category] ?? category}<span className="dot-separator">·</span>{account?.name ?? "Account"}</span>
       </div>
       <time className="transaction-date" dateTime={transaction.date}>{formatDate(transaction.date, { month: "short", day: "numeric" })}</time>
@@ -349,3 +354,16 @@ export function EmptyFeature({ title, detail }: { title: string; detail: string 
 }
 
 export type PinRequest = (title: string, submit: (pin: string) => Promise<void>) => void;
+
+/**
+ * The row title. Money moved between your own accounts reads as a direction, not a shop:
+ * "Own savings" −$50 → "To savings", "Own checking" +$50 → "From checking".
+ * MoneyWise's own transfers ("Own accounts") use their description, e.g. "Saved for iPhone 17".
+ */
+function transactionTitle(transaction: Transaction): string {
+  const name = transaction.merchant || transaction.description;
+  if (transaction.category !== "transfer" || !/^own /i.test(name)) return name;
+  if (/^own accounts$/i.test(name)) return transaction.description || "Between your accounts";
+  const account = name.replace(/^own /i, "");
+  return transaction.amountCents < 0 ? `To ${account}` : `From ${account}`;
+}

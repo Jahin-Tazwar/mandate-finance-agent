@@ -19,6 +19,8 @@ export const WishSchema = z.object({
   plan: z.object({
     cadence: PayCadence,
     perPaydayCents: z.number().int(),
+    /** What it really gets per payday (from the server; device-only wishes don't have it). */
+    affordablePerPaydayCents: z.number().int().optional(),
     paydaysLeft: z.number().int(),
     nextContributionDate: IsoDate.nullable(),
   }),
@@ -328,4 +330,21 @@ export function categoryLabel(category: z.infer<typeof WishCategory>) {
 
 export function statusLabel(status: z.infer<typeof WishStatus>) {
   return status.replaceAll("_", " ");
+}
+
+/** What a status badge means, for its hover text. */
+export function statusHelp(status: z.infer<typeof WishStatus>): string {
+  if (status === "on_track") return "On track: uses at most 60% of what you usually have left each payday.";
+  if (status === "tight") return "Tight: possible, but uses most of what you usually have left each payday.";
+  if (status === "not_realistic") return "Not realistic: needs more than you have left each payday, so at what you can afford it will be late.";
+  if (status === "paused") return "Paused: nothing is set aside until you resume it.";
+  return "Achieved: the goal is reached.";
+}
+
+/** e.g. "3 days early", "201 days late", "1 day late", "On the target date", "Not reachable yet". */
+export function etaWords(eta: { daysVsTarget: number } | null): string {
+  if (!eta) return "Not reachable yet";
+  if (eta.daysVsTarget === 0) return "On the target date";
+  const days = Math.abs(eta.daysVsTarget);
+  return `${days} day${days === 1 ? "" : "s"} ${eta.daysVsTarget < 0 ? "early" : "late"}`;
 }

@@ -30,7 +30,7 @@ export function SubscriptionsView({ persona, resource }: { persona: Persona; res
           </article>;
         })}</div> : <div className="empty-state"><span className="empty-icon"><Icon name="subscriptions" size={21} /></span><strong>No subscriptions detected yet</strong><span>Recurring services will appear here as they are found in your activity.</span></div>)}
       </section>
-      <div className="notice-card"><span className="notice-icon"><Icon name="spark" size={17} /></span><span><strong>You're in control.</strong> MoneyWise highlights subscriptions you may want to review. It won't cancel anything for you.</span></div>
+      <div className="notice-card"><span className="notice-icon"><Icon name="spark" size={17} /></span><span><strong>You're in control.</strong> MoneyWise highlights subscriptions you may want to review. The agent can suggest cancelling one, but it never cancels anything without your approval and PIN.</span></div>
     </div>
   );
 }

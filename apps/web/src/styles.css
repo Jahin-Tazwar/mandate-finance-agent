@@ -47,7 +47,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
 .main-shell { min-height: 100vh; margin-left: 244px; display: flex; flex-direction: column; }
 .topbar { height: 72px; flex: 0 0 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 44px; background: rgba(255,255,255,.92); border-bottom: 1px solid #edecf3; }
 .topbar-context { display: flex; align-items: center; gap: 11px; color: #53566e; font-size: 14px; font-weight: 600; }
-.context-label { color: #9b9db0; font-size: 12px; font-weight: 700; letter-spacing: 1.05px; }
+.context-label { white-space: nowrap; color: #9b9db0; font-size: 12px; font-weight: 700; letter-spacing: 1.05px; }
 .context-divider { color: #c9cad5; font-size: 17px; font-weight: 400; }
 .topbar-actions { display: flex; align-items: center; gap: 20px; }
 .live-indicator { display: flex; align-items: center; gap: 7px; color: #76798f; font-size: 12px; font-weight: 600; }
@@ -115,6 +115,13 @@ h1 { margin-top: 7px; color: #23243e; font-family: Manrope, sans-serif; font-siz
 .chart-summary { display: flex; align-items: flex-end; justify-content: space-between; }
 .chart-summary strong { display: block; margin-top: 4px; color: #3f4260; font-family: Manrope, sans-serif; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .chart-date { color: #85879a; font-size: 12px; }
+@media (max-width: 1000px) { .demo-date { display: none; } }
+.demo-date { margin-left: 10px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 20px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.chart-target-line { stroke: #9a9cad; stroke-width: 1.2; stroke-dasharray: 3 4; }
+.chart-label-target { transform: translate(-50%, -110%); color: #6e7187; }
+.chart-legend i.chart-legend-target { width: 0; height: 10px; border-radius: 0; border-left: 2px dashed #9a9cad; }
+.wish-need-note { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.wish-need-line { color: #86673d; }
 .section-note { margin: -4px 0 12px; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .chart-explainer { margin: -4px 0 12px; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .chart-plot { position: relative; height: 142px; margin-top: 6px; cursor: crosshair; touch-action: pan-y; outline: none; }

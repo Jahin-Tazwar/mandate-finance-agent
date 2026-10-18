@@ -39,7 +39,13 @@ export const WishPatch = z
 /** How the wish gets funded: a fixed amount every payday until the target date. */
 export const WishPlan = z.object({
   cadence: PayCadence,
+  /** What it NEEDS per payday to be ready by the target date, e.g. Kyoto: $26.00 each Friday. */
   perPaydayCents: Cents,
+  /**
+   * What it really GETS per payday: the plan, or less if that's all that's left over
+   * (the ETA uses this), e.g. Kyoto: $6.67 each Friday. 0 when paused or achieved.
+   */
+  affordablePerPaydayCents: Cents,
   paydaysLeft: z.number().int(),
   /** null when nothing is planned (achieved, paused, or the date is too soon). */
   nextContributionDate: IsoDate.nullable(),

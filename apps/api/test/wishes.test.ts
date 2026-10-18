@@ -37,7 +37,7 @@ describe("planWish", () => {
   it("splits what's left over the paydays before the target date", () => {
     // $1,050 left, 26 Fridays from Oct 16 to Apr 9 → $40.39 each (rounded up)
     const { preview, paceCents } = planWish(iphone, ctx);
-    expect(preview.plan).toEqual({ cadence: "weekly", perPaydayCents: 4_039, paydaysLeft: 26, nextContributionDate: "2026-10-16" });
+    expect(preview.plan).toEqual({ cadence: "weekly", perPaydayCents: 4_039, affordablePerPaydayCents: 4_039, paydaysLeft: 26, nextContributionDate: "2026-10-16" });
     expect(paceCents).toBe(4_039);
     expect(preview.progressPct).toBe(12.5);
   });
@@ -164,5 +164,15 @@ describe("wish API: create, preview, change, delete", () => {
   it("403 for a persona that isn't yours, 404 for an unknown wish", async () => {
     await signedIn(app, "maya").get("/api/personas/zed/wishes").expect(403);
     await signedIn(app, "maya").patch("/api/wishes/wish_nope_1").send({ paused: true }).expect(404);
+  });
+});
+
+describe("a 2nd wish shows what it needs AND what it really gets", () => {
+  it("Kyoto: needs $26.00 each Friday, gets the $6.67 left after the iPhone", async () => {
+    const res = await signedIn(createApp(), "maya").get("/api/personas/maya/wishes").expect(200);
+    const kyoto = WishList.parse(res.body).wishes.find((w) => w.title === "Trip to Kyoto")!;
+    expect(kyoto.plan).toMatchObject({ perPaydayCents: 2_600, affordablePerPaydayCents: 667 });
+    // $6.67 is what's left AFTER the iPhone, not what Maya usually has left ($47.06)
+    expect(kyoto.advice[0]).toBe("Saving $26 each Friday is more than the $6.67 left over after your higher-priority wishes.");
   });
 });

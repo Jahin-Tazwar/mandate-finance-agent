@@ -82,6 +82,8 @@ export interface PlanContext {
    * higher-priority wishes already take. e.g. Maya: $47.06 − iPhone $40.39 = $6.67 for her 2nd wish.
    */
   availableCents: number;
+  /** The whole usual surplus per payday, e.g. Maya: $47.06 (to explain a smaller availableCents). Default: availableCents. */
+  usualSurplusCents?: number;
   /** Biggest optional spending (dining, shopping or fun), for advice. null if none. */
   topExtraCategory: string | null;
 }
@@ -99,7 +101,7 @@ export function planWish(w: WishFields, ctx: PlanContext): { preview: WishPrevie
   const progressPct = Math.min(100, Math.round((w.savedCents / w.targetCents) * 1000) / 10); // one decimal
 
   // Fill in the parts that are the same for every outcome
-  const result = (status: WishStatus, perPaydayCents: number, paydays: string[], eta: WishPreview["eta"], advice: string[]) => ({
+  const result = (status: WishStatus, perPaydayCents: number, paydays: string[], eta: WishPreview["eta"], advice: string[], affordableCents = 0) => ({
     personaId: w.personaId,
     title: w.title,
     category: w.category,
@@ -114,6 +116,7 @@ export function planWish(w: WishFields, ctx: PlanContext): { preview: WishPrevie
     plan: {
       cadence: payCycle.cadence,
       perPaydayCents,
+      affordablePerPaydayCents: affordableCents,
       paydaysLeft: paydays.length,
       nextContributionDate: status === "paused" || status === "achieved" ? null : (paydays[0] ?? null),
     },
@@ -160,7 +163,7 @@ export function planWish(w: WishFields, ctx: PlanContext): { preview: WishPrevie
     }
   }
 
-  return { preview: result(status, perPayday, paydays, eta, adviceFor(status, perPayday, pace, paydays.length, eta, w, ctx)), paceCents: pace };
+  return { preview: result(status, perPayday, paydays, eta, adviceFor(status, perPayday, pace, paydays.length, eta, w, ctx), pace), paceCents: pace };
 }
 
 /** Plain sentences explaining the plan and, if needed, how to fix it. */
@@ -177,6 +180,11 @@ function adviceFor(
   const each = eachPayday(payCycle);
   const advice: string[] = [];
 
+  // e.g. "you usually have left over", or for a 2nd wish "left over after your higher-priority wishes"
+  // (Maya: $47.06 left each Friday − iPhone $40.39 = $6.67 for Kyoto)
+  const sharedWithOthers = availableCents < (ctx.usualSurplusCents ?? availableCents);
+  const leftOver = sharedWithOthers ? "left over after your higher-priority wishes" : "you usually have left over";
+
   // The date is too close: not a single payday before it
   if (paydaysLeft === 0) {
     advice.push("The target date is before your next payday. Pick a later date.");
@@ -186,9 +194,9 @@ function adviceFor(
   // How much of what's left over this plan uses
   if (availableCents > 0 && perPayday <= availableCents) {
     const pct = Math.round((perPayday / availableCents) * 100);
-    advice.push(`Saving ${usd(perPayday)} ${each} uses ${pct}% of what you usually have left over.`);
+    advice.push(`Saving ${usd(perPayday)} ${each} uses ${pct}% of what ${sharedWithOthers ? "is " : ""}${leftOver}.`);
   } else if (availableCents > 0) {
-    advice.push(`Saving ${usd(perPayday)} ${each} is more than the ${usd(availableCents)} you usually have left over.`);
+    advice.push(`Saving ${usd(perPayday)} ${each} is more than the ${usd(availableCents)} ${leftOver}.`);
   }
 
   // Tight: how much less to spend on extras to make it comfortable (60%)

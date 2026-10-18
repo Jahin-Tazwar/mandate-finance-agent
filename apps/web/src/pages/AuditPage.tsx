@@ -51,7 +51,7 @@ export function AuditPage({ refreshKey }: { refreshKey: number }) {
     } catch (caught) { setError(errorText(caught, "Couldn't copy the hash. Select and copy it manually.")); }
   };
   return <div className="page-stack feature-page">
-    <FeatureHeader eyebrow="TRANSPARENT BY DESIGN" title="Audit log" subtitle="A verifiable record of decisions, rule checks, and signed changes." />
+    <FeatureHeader eyebrow="TRANSPARENT BY DESIGN" title="Audit log" subtitle="A verifiable record of decisions, rule checks, and signed changes. Each entry stores the fingerprint (hash) of the one before it (prev), so changing or deleting any entry breaks the chain and Verified turns into an error." />
     {error && <div className="inline-error" role="alert">{error}</div>}
     <section className="surface audit-panel">
       <div className="section-heading"><div><span className="eyebrow">HASH-CHAIN INTEGRITY</span><h2>Chain status</h2></div><div className="audit-actions"><button className="button button-secondary" disabled={working} onClick={() => void refresh()}>{working ? "Checking…" : "Verify again"}</button>{data?.anchorStatus.enabled && <button className="button button-primary" disabled={working} onClick={() => void anchor()}>Anchor now</button>}</div></div>
