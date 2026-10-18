@@ -102,7 +102,6 @@ h1 { margin-top: 7px; color: #23243e; font-family: Manrope, sans-serif; font-siz
 .insight-strip strong, .insight-strip span { display: block; }
 .insight-strip strong { color: #3c3f62; font-size: 12px; font-weight: 700; }
 .insight-strip div:nth-child(2) span { margin-top: 3px; color: #7f8299; font-size: 12px; }
-.verified-label { display: flex !important; align-items: center; gap: 5px; margin-left: auto; color: #4b987e; font-size: 12px; font-weight: 600; white-space: nowrap; }
 
 .content-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, .9fr); gap: 18px; align-items: stretch; }
 .surface { min-width: 0; border: 1px solid #e9e9f1; border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); }
@@ -118,7 +117,10 @@ h1 { margin-top: 7px; color: #23243e; font-family: Manrope, sans-serif; font-siz
 @media (max-width: 1000px) { .demo-date { display: none; } }
 .demo-date { margin-left: 10px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 20px; color: var(--muted); font-size: 11px; white-space: nowrap; }
 .chart-target-line { stroke: #9a9cad; stroke-width: 1.2; stroke-dasharray: 3 4; }
-.chart-label-target { transform: translate(-50%, -110%); color: #6e7187; }
+.chart-label.chart-label-target { transform: translate(-50%, -110%); color: #6e7187; }
+.chart-label.chart-label-target.chart-label-end { transform: translate(calc(-100% + 1px), -110%); }
+.chart-label.chart-label-target.chart-label-start { transform: translate(-1px, -110%); }
+.chart-label.chart-label-goal { transform: translate(2px, 25%); color: #b07a35; }
 .chart-legend i.chart-legend-target { width: 0; height: 10px; border-radius: 0; border-left: 2px dashed #9a9cad; }
 .wish-need-note { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; font-weight: 600; }
 .wish-need-line { color: #86673d; }
@@ -501,7 +503,6 @@ h1 { margin-top: 7px; color: #23243e; font-family: Manrope, sans-serif; font-siz
   .insight-badge { width: 29px; height: 29px; }
   .insight-strip strong { font-size: 12px; }
   .insight-strip div:nth-child(2) span { max-width: 230px; font-size: 12px; line-height: 1.4; }
-  .verified-label { display: none !important; }
   .content-grid, .lower-grid { grid-template-columns: 1fr; gap: 13px; }
   .forecast-panel, .budget-panel, .list-panel, .compact-panel { padding: 16px; }
   .chart-plot { height: 137px; }

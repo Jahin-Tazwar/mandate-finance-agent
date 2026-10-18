@@ -92,7 +92,6 @@ export function Overview({
       <section className="insight-strip">
         <div className="insight-badge"><Icon name="shield" size={18} /></div>
         <div><strong>AI suggests. Your rules decide.</strong><span>Your balances and insights come directly from your account activity.</span></div>
-        <span className="verified-label"><Icon name="check" size={14} /> API connected</span>
       </section>
 
       <section className="content-grid overview-grid">
@@ -106,6 +105,7 @@ export function Overview({
 
         <article className="surface budget-panel">
           <div className="section-heading"><div><span className="eyebrow">SPENDING PLAN</span><h2>This month's budget</h2></div>{budget.status === "success" && <span className="month-tag">{formatDate(`${budget.data.month}-01`, { month: "short", year: "numeric" })}</span>}</div>
+          <p className="section-note">Each limit is what you usually spend in that category: your average over the last 3 months, without one-off costs. The bar shows what you've spent so far this month.</p>
           <PanelState resource={budget} onRetry={budget.retry} label="Budget" />
           {budget.status === "success" && (topCategories.length ? (
             <>

@@ -18,7 +18,7 @@ export function SubscriptionsView({ persona, resource }: { persona: Persona; res
         <article className="surface stat-card"><span className="stat-label">WORTH A SECOND LOOK</span><strong>{resource.status === "success" ? active.filter((item) => item.unusedDays !== null && item.unusedDays >= 30).length : "—"}</strong><span className="subtle-line">Unused for at least 30 days</span></article>
       </section>
       <section className="surface data-page-panel">
-        <div className="section-heading"><div><span className="eyebrow">DETECTED FROM YOUR ACTIVITY</span><h2>Your recurring services</h2></div><span className="period-tag">LIVE DATA</span></div>
+        <div className="section-heading"><div><span className="eyebrow">DETECTED FROM YOUR ACTIVITY</span><h2>Your recurring services</h2></div></div>
         <PanelState resource={resource} onRetry={resource.retry} label="Subscriptions" />
         {resource.status === "success" && (active.length ? <div className="subscription-list">{active.map((subscription) => {
           const needsReview = subscription.unusedDays !== null && subscription.unusedDays >= 30;

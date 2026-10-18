@@ -405,6 +405,11 @@ function WishProjection({ wish, points, currency, payday, today }: {
   const last = series.at(-1)!;
   const reached = last.savedCents >= wish.targetCents;
 
+  // Keep the target-date label inside the chart: near the right edge it ends at the line
+  // (e.g. the iPhone's Apr 12 is the last date shown), near the left edge it starts there
+  const targetX = xAt(wish.targetDate) / CHART.width;
+  const targetAlign = targetX > 0.75 ? "chart-label-end" : targetX < 0.25 ? "chart-label-start" : "";
+
   // e.g. "Saving $6.67 every Friday, you reach $500.00 on Jul 9, 2027: 201 days after your target date."
   const gets = wish.plan.affordablePerPaydayCents ?? wish.plan.perPaydayCents;
   const vsTarget = wish.eta?.daysVsTarget ?? 0;
@@ -449,8 +454,8 @@ function WishProjection({ wish, points, currency, payday, today }: {
         </svg>
 
         {/* The goal (on its line) and the target date (on its vertical line) */}
-        <span className="chart-label chart-label-floor" style={chartPosition(CHART.right, yAt(wish.targetCents))}>Goal {formatMoney(wish.targetCents, currency)}</span>
-        <span className="chart-label chart-label-target" style={chartPosition(xAt(wish.targetDate), CHART.top - 14)}>Your target · {formatDate(wish.targetDate, { month: "short", day: "numeric" })}</span>
+        <span className="chart-label chart-label-goal" style={chartPosition(CHART.left, yAt(wish.targetCents))}>Goal {formatMoney(wish.targetCents, currency)}</span>
+        <span className={`chart-label chart-label-target ${targetAlign}`} style={chartPosition(xAt(wish.targetDate), CHART.top - 14)}>Your target · {formatDate(wish.targetDate, { month: "short", day: "numeric" })}</span>
 
         <span className="chart-marker chart-marker-lowest" style={chartPosition(xAt(series[0]!.date), yAt(series[0]!.savedCents))} />
         {reached && <span className="chart-marker chart-marker-pay" style={chartPosition(xAt(last.date), yAt(last.savedCents))} />}
