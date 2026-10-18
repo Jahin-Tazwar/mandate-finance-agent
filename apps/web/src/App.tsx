@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Action, Category, Persona, Transaction } from "@mandate/shared";
-import { ApiError, decideAction, getDemoAccounts, getHealth, getMe, parseAccounts, parseActions, parseBills, parseBudget, parseForecast, parsePayCycle, parseSubscriptions, parseTransactions, login, logout, runPayday, setKillSwitch, type Parser } from "./lib/api";
+import { ApiError, decideAction, getDemoAccounts, getHealth, getMe, parseAccounts, parseActions, parseBills, parseBudget, parseForecast, parseMandate, parsePayCycle, parseSubscriptions, parseTransactions, login, logout, runPayday, setKillSwitch, type Parser } from "./lib/api";
 import { ActivityPage } from "./pages/ActivityPage";
 import { ApprovalsPage } from "./pages/ApprovalsPage";
 import { AuditPage } from "./pages/AuditPage";
@@ -13,7 +13,7 @@ import { Overview } from "./pages/OverviewPage";
 import { SubscriptionsView } from "./pages/SubscriptionsPage";
 import { TransactionsView } from "./pages/TransactionsPage";
 import { WishesPage } from "./pages/WishesPage";
-import { Icon, categoryNames, useResource, type View } from "./pages/shared";
+import { Icon, categoryNames, formatMoney, useResource, type View } from "./pages/shared";
 import { connectTimeline } from "./lib/sse";
 
 
@@ -130,6 +130,10 @@ function App() {
   const forecast = useResource(root ? `${root}/forecast` : null, parseForecast, refreshKey);
   const payCycle = useResource(root ? `${root}/pay-cycle` : null, parsePayCycle, refreshKey);
   const bills = useResource(root ? `${root}/bills` : null, parseBills, refreshKey);
+  // The signed rules, for the chart's safety-floor line (e.g. "Checking never goes below $200")
+  const mandate = useResource(root ? `${root}/mandate` : null, parseMandate, refreshKey);
+  const floorRule = mandate.status === "success" ? mandate.data.policy.rules.find((rule) => rule.type === "balance_floor" && rule.account === "checking") : undefined;
+  const checkingFloorCents = floorRule?.type === "balance_floor" ? floorRule.minCents : undefined;
   const subscriptions = useResource(root ? `${root}/subscriptions` : null, parseSubscriptions, refreshKey);
   const approvals = useResource(root ? `${root}/approvals` : null, parseActions, refreshKey);
   const killSwitch = useResource(root ? `${root}/killswitch` : null, parseKillSwitch, refreshKey);
@@ -287,9 +291,7 @@ function App() {
     try {
       const result = await runPayday(personaId);
       setRefreshKey((value) => value + 1);
-      setNotification(result.actions.length
-        ? `Payday complete: ${result.actions.length} action${result.actions.length === 1 ? "" : "s"} recorded.`
-        : "Payday already ran. Nothing was repeated.");
+      setNotification(result.actions.length || result.paycheck ? paydaySummary(result.paycheck, result.actions, selectedPersona?.currency) : "Payday already ran. Nothing was repeated.");
       navigate("activity");
     } catch (error) { setNotification(error instanceof Error ? error.message : "Couldn't run payday."); }
   };
@@ -325,7 +327,7 @@ function App() {
         <div className="nav-caption">WORKSPACE</div>
         <nav className="side-nav" aria-label="Main navigation">
           {navigationViews.map((item) => (
-            <button key={item} className={`nav-item ${navView === item ? "active" : ""}`} onClick={() => navigate(item)} aria-current={navView === item ? "page" : undefined}>
+            <button key={item} className={`nav-item ${navView === item ? "active" : ""}`} onClick={() => navigate(item)} aria-current={navView === item ? "page" : undefined} aria-label={viewLabels[item]} title={viewLabels[item]}>
               <Icon name={item} size={19} /><span>{viewLabels[item]}</span>{item === "approvals" && <span className="nav-count">{approvals.status === "success" ? approvals.data.length : ""}</span>}
             </button>
           ))}
@@ -348,9 +350,9 @@ function App() {
             <button className={`agent-switch ${killSwitch.status === "success" && !killSwitch.data.enabled ? "agent-on" : "agent-off"}`} onClick={toggleAgent} disabled={killSwitch.status !== "success"} aria-pressed={killSwitch.status === "success" && !killSwitch.data.enabled} title="Turn the agent off instantly; turning it back on requires your PIN">
               Agent: {killSwitch.status === "success" && !killSwitch.data.enabled ? "ON" : "OFF"}
             </button>
-            <label className="persona-select-wrap">
+            <label className="persona-select-wrap" title="Switch demo profile: signs in again with that person's public demo account">
               <span className="avatar">{selectedPersona?.name.split(" ").map((part) => part[0]).join("").slice(0, 2) ?? "…"}</span>
-              <select aria-label="Switch demo account" value={personaId} onChange={(event) => void switchDemoAccount(event.target.value)} disabled={!demoAccounts.length}>
+              <select aria-label="Switch demo profile" value={personaId} onChange={(event) => void switchDemoAccount(event.target.value)} disabled={!demoAccounts.length}>
                 {demoAccounts.map((account) => <option key={account.personaId} value={account.personaId}>{account.name}</option>)}
               </select>
               <Icon name="chevron" size={15} />
@@ -361,7 +363,7 @@ function App() {
 
         <main className="page-content">
           {untrustedWarning && <div className="global-injection-warning" role="alert"><strong>Security warning: a document tried to make a payment.</strong><span>It was treated as untrusted and the policy engine blocked the unsafe request. Nothing moved.</span><button className="text-button" onClick={() => setUntrustedWarning(false)} aria-label="Dismiss security warning">Dismiss</button></div>}
-          {view === "overview" && <Overview persona={selectedPersona} accounts={accounts} budget={budget} forecast={forecast} payCycle={payCycle} bills={bills} subscriptions={subscriptions} transactions={recentTransactions} accountNames={accountNames} onNavigate={navigate} onOpenWish={openWish} pendingApprovals={approvals.status === "success" ? approvals.data.length : 0} onUpload={() => setUploadOpen(true)} />}
+          {view === "overview" && <Overview persona={selectedPersona} accounts={accounts} budget={budget} forecast={forecast} payCycle={payCycle} bills={bills} floorCents={checkingFloorCents} subscriptions={subscriptions} transactions={recentTransactions} accountNames={accountNames} onNavigate={navigate} onOpenWish={openWish} pendingApprovals={approvals.status === "success" ? approvals.data.length : 0} onUpload={() => setUploadOpen(true)} />}
           {(view === "wishes" || view === "wishNew" || view === "wishDetail" || view === "wishEdit") && <WishesPage persona={selectedPersona} payCycle={payCycle} view={view} wishId={wishId} onNavigate={navigate} onOpenWish={openWish} onEditWish={editWish} />}
           {view === "transactions" && <TransactionsView persona={selectedPersona} resource={transactionResource} items={visibleTransactions} loadedCount={transactionItems.length} onLoadMore={() => setTransactionOffset(transactionItems.length)} accountNames={accountNames} search={search} onSearch={setSearch} category={categoryFilter} onCategory={setCategoryFilter} />}
           {view === "subscriptions" && <SubscriptionsView persona={selectedPersona} resource={subscriptions} />}
@@ -420,3 +422,21 @@ function App() {
 
 
 export { App };
+
+/**
+ * The Run payday toast, e.g. "Payday: +$284.75 landed. 4 actions: 3 done automatically, 1 waiting for you."
+ */
+function paydaySummary(paycheck: Transaction | null, actions: Action[], currency = "USD"): string {
+  const done = actions.filter((action) => action.status === "executed").length;
+  const waiting = actions.filter((action) => action.status === "pending_approval").length;
+  const blocked = actions.filter((action) => action.status === "denied").length;
+
+  const parts: string[] = [];
+  if (done) parts.push(`${done} done automatically`);
+  if (waiting) parts.push(`${waiting} waiting for you`);
+  if (blocked) parts.push(`${blocked} blocked`);
+
+  const pay = paycheck ? `Payday: +${formatMoney(paycheck.amountCents, currency)} landed.` : "Payday:";
+  const count = `${actions.length} action${actions.length === 1 ? "" : "s"}`;
+  return parts.length ? `${pay} ${count}: ${parts.join(", ")}.` : `${pay} no actions needed.`;
+}

@@ -21,6 +21,7 @@ export function Overview({
   onOpenWish,
   pendingApprovals,
   onUpload,
+  floorCents,
 }: {
   persona: Persona;
   accounts: ReturnType<typeof useResource<Account[]>>;
@@ -35,6 +36,8 @@ export function Overview({
   onOpenWish: (id: string) => void;
   pendingApprovals: number;
   onUpload: () => void;
+  /** The checking safety floor from the signed rules, e.g. 20000 = $200 (drawn on the chart). */
+  floorCents?: number;
 }) {
   const [wishResource, setWishResource] = useState<Resource<WishList>>({ status: "loading" });
   const [wishReload, setWishReload] = useState(0);
@@ -96,7 +99,7 @@ export function Overview({
         <article className="surface forecast-panel">
           <div className="section-heading"><div><span className="eyebrow">LOOKING AHEAD</span><h2>Balance forecast</h2></div><span className="period-tag">NEXT 30 DAYS</span></div>
           <PanelState resource={forecast} onRetry={forecast.retry} label="Balance forecast" />
-          {forecast.status === "success" && <BalanceChart forecast={forecast.data} currency={persona.currency} />}
+          {forecast.status === "success" && <BalanceChart forecast={forecast.data} currency={persona.currency} floorCents={floorCents} bills={bills.status === "success" ? bills.data : []} />}
           {forecast.status === "success" && forecast.data.warnings.length > 0 && <div className="warning-box"><span className="warning-dot" /><div><strong>Heads up</strong>{forecast.data.warnings.map((warning) => <p key={warning}>{warning}</p>)}</div></div>}
           {forecast.status === "success" && forecast.data.warnings.length === 0 && <div className="good-news"><span><Icon name="check" size={15} /></span> Your projected balance stays above your safety buffer.</div>}
         </article>

@@ -126,7 +126,13 @@ export function ChatPage({ persona, onApprove, onRefresh }: {
       {error && <div className="form-error-banner" role="alert">{error}</div>}
       <form className="chat-compose" onSubmit={(event) => void send(event)}>
         <label className="sr-only" htmlFor="chat-input">Ask anything about your money</label>
-        <textarea id="chat-input" rows={2} maxLength={2000} placeholder="Ask anything about your money…" value={draft} onChange={(event) => setDraft(event.target.value)} disabled={sending} />
+        <textarea id="chat-input" rows={2} maxLength={2000} placeholder="Ask anything about your money…" value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => {
+          // Enter sends; Shift+Enter adds a new line (Skip: while an accented letter is being typed)
+          if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+            event.preventDefault();
+            void send();
+          }
+        }} disabled={sending} />
         <button className="button button-primary" type="submit" disabled={sending || !draft.trim()}>{sending ? "Sending…" : "Send"}</button>
       </form>
     </section>

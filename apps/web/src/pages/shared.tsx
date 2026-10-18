@@ -81,6 +81,11 @@ export function formatMoney(cents: number, currency = "USD") {
   return money(cents, currency);
 }
 
+/** Ends a message with a full stop, e.g. "Wrong PIN" → "Wrong PIN." (left alone if it has one). */
+export function sentence(text: string): string {
+  return text.endsWith(".") ? text : `${text}.`;
+}
+
 export function formatDate(value: string, options?: Intl.DateTimeFormatOptions) {
   const date = new Date(`${value}T12:00:00`);
   if (Number.isNaN(date.getTime())) return value;
@@ -169,36 +174,122 @@ export function PanelState({ resource, onRetry, label }: { resource: Resource<un
   return null;
 }
 
-export function BalanceChart({ forecast, currency }: { forecast: Forecast; currency: string }) {
-  const days = forecast.days;
+/** One day of the forecast, with what happens on it (for the markers and the hover box). */
+interface ChartDay {
+  date: string;
+  balanceCents: number;
+  /** The balance went up this day, e.g. Maya's Friday pay. */
+  payday: boolean;
+  /** Bills due this day, e.g. [CityPower $81.13]. */
+  bills: Bill[];
+}
+
+// The drawing's own units (the SVG viewBox); labels and dots are placed in % of these
+const CHART = { width: 600, height: 170, left: 6, right: 594, top: 22, bottom: 142 };
+
+/**
+ * The 30-day balance forecast: checking balance each day, the safety floor, paydays and bills.
+ * Hovering (or tapping, or the arrow keys) shows one day, e.g. "Thu, Oct 15 · $387.56 · Lowest point".
+ */
+export function BalanceChart({ forecast, currency, floorCents, bills = [] }: { forecast: Forecast; currency: string; floorCents?: number; bills?: Bill[] }) {
+  const [active, setActive] = useState<number | null>(null);
+  const days: ChartDay[] = forecast.days.map((day, index) => ({
+    ...day,
+    payday: index > 0 && day.balanceCents > forecast.days[index - 1]!.balanceCents,
+    bills: bills.filter((bill) => bill.dueDate === day.date && bill.status !== "paid"),
+  }));
   if (!days.length) return <div className="empty-note">There is no forecast data yet.</div>;
+
+  // Scale from the lowest of (balances, floor) to the highest, so the floor line always fits
   const values = days.map((day) => day.balanceCents);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = Math.max(max - min, 1);
-  const points = days.map((day, index) => {
-    const x = 6 + (index / Math.max(days.length - 1, 1)) * 588;
-    const y = 142 - ((day.balanceCents - min) / range) * 116;
-    return `${x},${y}`;
-  }).join(" ");
-  const lowestIndex = days.findIndex((day) => day.date === forecast.lowestPoint.date);
-  const lowestX = 6 + (Math.max(lowestIndex, 0) / Math.max(days.length - 1, 1)) * 588;
-  const lowestY = 142 - ((forecast.lowestPoint.balanceCents - min) / range) * 116;
+  const low = Math.min(...values, floorCents ?? Number.POSITIVE_INFINITY);
+  const high = Math.max(...values);
+  const range = Math.max(high - low, 1);
+  const xAt = (index: number) => CHART.left + (index / Math.max(days.length - 1, 1)) * (CHART.right - CHART.left);
+  const yAt = (cents: number) => CHART.bottom - ((cents - low) / range) * (CHART.bottom - CHART.top);
+  // e.g. x 300 → left "50%": dots and labels are HTML on top of the drawing, so text stays readable on phones
+  const at = (x: number, y: number) => ({ left: `${(x / CHART.width) * 100}%`, top: `${(y / CHART.height) * 100}%` });
+
+  const points = days.map((day, index) => `${xAt(index)},${yAt(day.balanceCents)}`).join(" ");
+  const lowestIndex = Math.max(days.findIndex((day) => day.date === forecast.lowestPoint.date), 0);
+  const beforePayday = days[lowestIndex + 1]?.payday ?? false;
+
+  // Skip: payday dots when pay comes almost every day (they'd cover the whole line)
+  const showPaydays = days.filter((day) => day.payday).length <= 6;
+
+  // The day under the pointer: its position across the chart → the nearest day
+  const pick = (clientX: number, box: DOMRect) => {
+    const x = ((clientX - box.left) / box.width) * CHART.width;
+    const index = Math.round(((x - CHART.left) / (CHART.right - CHART.left)) * (days.length - 1));
+    setActive(Math.min(Math.max(index, 0), days.length - 1));
+  };
+  // Arrow keys move one day at a time (starting from the lowest point)
+  const step = (key: string) => {
+    if (key === "ArrowRight") setActive((index) => Math.min((index ?? lowestIndex) + 1, days.length - 1));
+    if (key === "ArrowLeft") setActive((index) => Math.max((index ?? lowestIndex) - 1, 0));
+  };
+  const shown = active === null ? null : days[active]!;
 
   return (
     <div className="chart-wrap">
+      <p className="chart-explainer">Your checking balance each day for the next 30 days, if your usual spending, bills and pay continue.</p>
       <div className="chart-summary">
         <div><span className="eyebrow">LOWEST PROJECTED BALANCE</span><strong>{formatMoney(forecast.lowestPoint.balanceCents, currency)}</strong></div>
-        <span className="chart-date">{formatDate(forecast.lowestPoint.date, { month: "short", day: "numeric" })}</span>
+        <span className="chart-date">{formatDate(forecast.lowestPoint.date, { month: "short", day: "numeric" })}{beforePayday ? " · the day before payday" : ""}</span>
       </div>
-      <svg className="balance-chart" viewBox="0 0 600 170" role="img" aria-label={`Projected balance over ${days.length} days, lowest ${formatMoney(forecast.lowestPoint.balanceCents, currency)}`}>
-        <defs><linearGradient id="balance-area" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#6974e8" stopOpacity=".2" /><stop offset="100%" stopColor="#6974e8" stopOpacity="0" /></linearGradient></defs>
-        <path d={`M ${points.replaceAll(" ", " L ")} L 594,158 L 6,158 Z`} fill="url(#balance-area)" />
-        <polyline points={points} fill="none" stroke="#6872e6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        <line x1="6" x2="594" y1="142" y2="142" stroke="#e7e8f1" strokeDasharray="4 6" />
-        <circle cx={lowestX} cy={lowestY} r="5" fill="#fff" stroke="#6872e6" strokeWidth="3" />
-      </svg>
-      <div className="chart-axis"><span>Today · {formatDate(days.at(0)?.date ?? forecast.lowestPoint.date)}</span><span>Next 30 days</span><span>{formatDate(days.at(-1)?.date ?? forecast.lowestPoint.date)}</span></div>
+      <div
+        className="chart-plot"
+        role="img"
+        tabIndex={0}
+        aria-label={`Projected checking balance over ${days.length} days, lowest ${formatMoney(forecast.lowestPoint.balanceCents, currency)} on ${formatDate(forecast.lowestPoint.date)}. Use the arrow keys to read each day.`}
+        onPointerMove={(event) => pick(event.clientX, event.currentTarget.getBoundingClientRect())}
+        onPointerDown={(event) => pick(event.clientX, event.currentTarget.getBoundingClientRect())}
+        onPointerLeave={() => setActive(null)}
+        onKeyDown={(event) => step(event.key)}
+        onFocus={() => setActive(lowestIndex)}
+        onBlur={() => setActive(null)}
+      >
+        <svg className="balance-chart" viewBox={`0 0 ${CHART.width} ${CHART.height}`} preserveAspectRatio="none" aria-hidden="true">
+          <defs><linearGradient id="balance-area" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#6974e8" stopOpacity=".2" /><stop offset="100%" stopColor="#6974e8" stopOpacity="0" /></linearGradient></defs>
+          <path d={`M ${points.replaceAll(" ", " L ")} L ${CHART.right},${CHART.bottom + 16} L ${CHART.left},${CHART.bottom + 16} Z`} fill="url(#balance-area)" />
+          {floorCents !== undefined && <line className="chart-floor-line" x1={CHART.left} x2={CHART.right} y1={yAt(floorCents)} y2={yAt(floorCents)} vectorEffect="non-scaling-stroke" />}
+          <polyline points={points} fill="none" stroke="#6872e6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          {shown && <line className="chart-guide" x1={xAt(active!)} x2={xAt(active!)} y1={CHART.top - 8} y2={CHART.bottom + 16} vectorEffect="non-scaling-stroke" />}
+        </svg>
+
+        {/* Highest balance (top left) and the safety floor (on its line), so the height means something */}
+        <span className="chart-label chart-label-high" style={at(CHART.left, CHART.top)}>{formatMoney(high, currency)}</span>
+        {floorCents !== undefined && <span className="chart-label chart-label-floor" style={at(CHART.right, yAt(floorCents))}>Safety floor {formatMoney(floorCents, currency)}</span>}
+
+        {/* Why the line jumps: paydays and bills */}
+        {days.map((day, index) => (
+          <span key={day.date}>
+            {showPaydays && day.payday && <span className="chart-marker chart-marker-pay" style={at(xAt(index), yAt(day.balanceCents))} />}
+            {day.bills.length > 0 && <span className="chart-marker chart-marker-bill" style={at(xAt(index), yAt(day.balanceCents))} />}
+          </span>
+        ))}
+        <span className="chart-marker chart-marker-lowest" style={at(xAt(lowestIndex), yAt(forecast.lowestPoint.balanceCents))} />
+        {shown && <span className="chart-marker chart-marker-active" style={at(xAt(active!), yAt(shown.balanceCents))} />}
+
+        {/* The hover box, e.g. "Thu, Oct 15 · $387.56 · Lowest point · CityPower $81.13 due" */}
+        {shown && (
+          <div className={`chart-tooltip ${active! > days.length / 2 ? "chart-tooltip-left" : ""}`} style={at(xAt(active!), CHART.top)} role="status">
+            <span>{formatDate(shown.date, { weekday: "short", month: "short", day: "numeric" })}</span>
+            <strong>{formatMoney(shown.balanceCents, currency)}</strong>
+            {active === lowestIndex && <small>Lowest point</small>}
+            {shown.payday && <small>Payday</small>}
+            {shown.bills.map((bill) => <small key={bill.id}>{bill.payee} {formatMoney(bill.amountCents, currency)} due</small>)}
+            {floorCents !== undefined && shown.balanceCents < floorCents && <small className="chart-tooltip-warning">Below your {formatMoney(floorCents, currency)} floor</small>}
+          </div>
+        )}
+      </div>
+      <div className="chart-axis"><span>Today · {formatDate(days.at(0)!.date)}</span><span>Next 30 days</span><span>{formatDate(days.at(-1)!.date)}</span></div>
+      <div className="chart-legend">
+        {showPaydays && <span><i className="chart-marker-pay" /> Payday</span>}
+        {days.some((day) => day.bills.length) && <span><i className="chart-marker-bill" /> Bill due</span>}
+        <span><i className="chart-marker-lowest" /> Lowest point</span>
+        <span className="chart-legend-hint">Hover or tap the chart to see each day</span>
+      </div>
     </div>
   );
 }

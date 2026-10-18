@@ -3,7 +3,7 @@ import { type Persona } from "@mandate/shared";
 import { ApiError, uploadDocument, type UploadDocumentResult } from "../lib/api";
 
 import { formatShortDate, money } from "../lib/money";
-import { errorText, trapDialogFocus } from "./shared";
+import { errorText, sentence, trapDialogFocus } from "./shared";
 import { ActionCard } from "./ActionCard";
 
 export function BillUploadDialog({ persona, onClose, onUntrusted, onRefresh }: {
@@ -93,7 +93,7 @@ export function PinPrompt({ title, submit, onCancel }: { title: string; submit: 
       setAttemptsLeft(typeof failure?.attemptsLeft === "number" ? failure.attemptsLeft : null);
       setError(failure?.retryAfterSeconds
         ? `Too many attempts. Try again in ${Math.ceil(failure.retryAfterSeconds / 60)} minutes.`
-        : `${errorText(caught, "PIN verification failed.")}${typeof failure?.attemptsLeft === "number" ? ` ${failure.attemptsLeft} attempts left.` : ""}`);
+        : `${sentence(errorText(caught, "PIN verification failed."))}${typeof failure?.attemptsLeft === "number" ? ` ${failure.attemptsLeft} attempts left.` : ""}`);
     } finally { setBusy(false); }
   };
   return <div className="modal-backdrop pin-backdrop"><form ref={dialog} className="modal-card pin-card" role="dialog" aria-modal="true" aria-labelledby="pin-title" onSubmit={(event) => void confirm(event)}>

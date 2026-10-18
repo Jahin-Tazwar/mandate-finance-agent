@@ -3,7 +3,7 @@ import { type DemoAccount } from "@mandate/shared";
 import { ApiError, getDemoAccounts } from "../lib/api";
 
 
-import { errorText } from "./shared";
+import { errorText, sentence } from "./shared";
 
 export function SignInPage({ onSignIn }: { onSignIn: (username: string, password: string) => Promise<void> }) {
   const [accounts, setAccounts] = useState<DemoAccount[]>([]);
@@ -28,7 +28,7 @@ export function SignInPage({ onSignIn }: { onSignIn: (username: string, password
       const failure = caught instanceof ApiError ? caught : null;
       setError(failure?.retryAfterSeconds
         ? `Too many attempts. Try again in ${Math.ceil(failure.retryAfterSeconds / 60)} minutes.`
-        : `${errorText(caught, "Couldn't sign in.")}${typeof failure?.attemptsLeft === "number" ? ` ${failure.attemptsLeft} attempts left.` : ""}`);
+        : `${sentence(errorText(caught, "Couldn't sign in."))}${typeof failure?.attemptsLeft === "number" ? ` ${failure.attemptsLeft} attempts left.` : ""}`);
     } finally { setBusy(false); setSigningInAs(""); }
   };
   const submit = (event: FormEvent) => { event.preventDefault(); void signIn(username, password); };
