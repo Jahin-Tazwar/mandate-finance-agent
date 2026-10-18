@@ -129,7 +129,7 @@ flowchart LR
 
 - **Permission tiers:** L0 watch only · L1 suggest · L2 act with approval · L3 act alone within the rules. Default: **"ask me first"** (L2).
 - **Rules signed with a PIN**, turned into rules by plain code, so the AI can't rewrite them.
-- **Sign-in and account isolation:** signed in as Maya, changing "maya" to "daniel" in a link → *"That isn't your account."* **PIN** for approvals; **5 wrong tries → locked**, longer each time (5 min, 15, 30, 1 hour): a thief gets ~55 guesses in 8 hours, not 480.
+- **Sign-in and account isolation:** signed in as Maya, changing "maya" to "daniel" in a link → *"That isn't your account."* **PIN** for approvals; **5 wrong PINs → locked**, longer each time (5 min, 15, 30, 1 hour): a thief gets ~55 guesses in 8 hours, not 480.
 - **Two attacks blocked in one upload:** Maya's phone bill with hidden white text → two red warnings → the $35 bill is **blocked** too, because payday already paid it: *"MoneyWise won't pay the same bill twice."* → the hidden $500 is **blocked**: *"Documents can't add new payees."*
 - **Privacy:** card numbers, emails and phone numbers are removed before anything reaches the AI; the AI provider is set to one that doesn't keep our data (see section 4 for the development exception).
 - **Tamper-evident audit log**, and its fingerprint published on a **public test blockchain** (Implemented on a test network; show the explorer link only once the test wallet is funded).
@@ -179,7 +179,7 @@ flowchart TB
 ### Slide 10: Testing & Evaluation · 0:30 · Measured results only
 **Message:** *We measured it.*
 
-- **207 automated tests pass**, including **28 red-team tests** (hidden instructions in bills, look-alike company names, splitting payments, a fooled AI, "admin mode" tricks, paying the same bill twice).
+- **208 automated tests pass**, including **29 red-team tests** (hidden instructions in bills, look-alike company names, splitting payments, a fooled AI, "admin mode" tricks, paying the same bill twice).
 - **Security lead's manual attack list:** add the PASS / FAIL count when it's done (due **Sun Oct 18**).
 - **0 known vulnerabilities** in the production libraries (npm audit).
 - **Speed:** data screens answer in **1–3 ms**. AI chat on the free development model: **3.1 s**, **8.5 s**, and **55.2 s** for a question needing several lookups.

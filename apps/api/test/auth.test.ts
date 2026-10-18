@@ -143,6 +143,18 @@ describe("red team: guessing the PIN with a stolen session", () => {
     expect(guesses).toBe(55);
   });
 
+  it("sign-in locks stay at 5 minutes: a stranger can't lock Maya out for hours", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] }); // only the clock: supertest needs real timers
+    const locks: number[] = [];
+    for (let i = 0; i < 2; i++) {
+      for (let t = 0; t < 4; t++) await login("maya", "nope").expect(401);
+      const locked = await login("maya", "nope").expect(429);
+      locks.push(locked.body.retryAfterSeconds);
+      vi.setSystemTime(Date.now() + locked.body.retryAfterSeconds * 1000); // wait the lock out
+    }
+    expect(locks).toEqual([300, 300]);
+  });
+
   it("the right PIN clears it: the next mistake starts again at 5 minutes", () => {
     vi.useFakeTimers();
     vi.advanceTimersByTime(fiveWrong() * 1000);

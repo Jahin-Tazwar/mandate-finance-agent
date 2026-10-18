@@ -12,16 +12,20 @@ import { getPersona, listPersonas } from "../store";
  *   - passwords and PINs are stored only as salted scrypt hashes, compared in constant time
  *   - the session is an HttpOnly cookie signed with HMAC, so it can't be read or forged
  *   - every request is checked against the signed-in persona (no peeking at other accounts)
- *   - 5 wrong tries lock that username / PIN: 5 minutes, then longer each time in a row
+ *   - 5 wrong tries lock that username for 5 minutes, or that PIN for 5 minutes and longer each time in a row
  */
 
 const SESSION_COOKIE = "mandate_session";
 const SESSION_HOURS = 8;
 const MAX_TRIES = 5;
 /**
- * How long each lock in a row lasts: 5 min, 15 min, 30 min, then 1 hour every time.
+ * How long each PIN lock in a row lasts: 5 min, 15 min, 30 min, then 1 hour every time.
  * A fixed 5-minute lock let a thief with a stolen session try 480 PINs in 8 hours (a 4.8%
  * chance of finding a 4-digit PIN); with these it's about 55 (0.55%). A typo still costs 5 minutes.
+ *
+ * Skip: sign-in locks don't grow (always 5 minutes). Usernames are public, so a stranger
+ * could otherwise lock a real user out of sign-in for hours. Guessing a PIN needs a valid
+ * session first, so a longer PIN lock only slows down someone who's already inside.
  */
 const LOCK_STEPS_SECONDS = [5 * 60, 15 * 60, 30 * 60, 60 * 60];
 
@@ -62,7 +66,7 @@ function hashesFor(personaId: string) {
   return entry;
 }
 
-// ---- Lockout: 5 wrong tries → locked, longer each time ----
+// ---- Lockout: 5 wrong tries → locked (PIN locks get longer each time) ----
 
 /**
  * e.g. "login:maya" or "pin:maya" → wrong tries since the last lock, how many locks in a row,
@@ -99,8 +103,10 @@ function recordFailure(key: string): { attemptsLeft: number; lockSeconds?: numbe
   tries.set(key, entry);
   if (entry.failures < MAX_TRIES) return { attemptsLeft: MAX_TRIES - entry.failures };
 
-  // The 5th wrong try: lock, longer than last time (stays at 1 hour after the 4th lock)
-  const lockSeconds = LOCK_STEPS_SECONDS[Math.min(entry.locks, LOCK_STEPS_SECONDS.length - 1)]!;
+  // The 5th wrong try: lock. A PIN lock is longer than last time (stays at 1 hour after the
+  // 4th lock); a sign-in lock is always the first step, 5 minutes.
+  const step = key.startsWith("pin:") ? Math.min(entry.locks, LOCK_STEPS_SECONDS.length - 1) : 0;
+  const lockSeconds = LOCK_STEPS_SECONDS[step]!;
   entry.locks += 1;
   entry.lockedUntil = Date.now() + lockSeconds * 1000;
   return { attemptsLeft: 0, lockSeconds };
