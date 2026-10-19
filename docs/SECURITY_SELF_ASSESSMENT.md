@@ -241,7 +241,7 @@ Manual tests on the live site (Oct 19) with the demo customers, independent of t
 
 **Side finding (M3, M4):** the console also shows a font from `fonts.gstatic.com`, injected by a browser extension on the tester's machine (`express-utils.js`), **blocked by our Content-Security-Policy**. MoneyWise loads nothing from other sites, so this is the policy (5.10) doing its job.
 
-*The Security & Compliance Lead also fills in the "result" column of `docs/team/attack_list_starter.csv` (A01–A19) from manual runs.*
+*The results of all 19 attacks (A01–A19) are also recorded in `docs/team/attack_list_starter.csv`.*
 
 ---
 
@@ -288,7 +288,7 @@ Red-teaming our own product found real problems. Each was fixed, given a test, a
 - [x] Security headers (5.10), live since Oct 19
 - [x] Full evidence run on the live site (Oct 19): all 19 passed
 - [x] Manual-test screenshots in section 7 (M1–M9, all PASS)
-- [ ] Attack list results filled in (`attack_list_starter.csv`)
+- [x] Attack list results filled in (`attack_list_starter.csv`, from the Oct 19 live run)
 
 ---
 
