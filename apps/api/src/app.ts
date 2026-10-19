@@ -5,6 +5,7 @@ import { ZodError } from "zod";
 import { requireOwnPersona, requireSession } from "./auth";
 import { config } from "./config";
 import { HttpError } from "./http/errors";
+import { securityHeaders } from "./http/headers";
 import { actionRoutes } from "./routes/actions";
 import { agentRoutes } from "./routes/agent";
 import { anchorRoutes } from "./routes/anchors";
@@ -27,6 +28,10 @@ export function createApp() {
   // Render sits in front of us and handles HTTPS; trust its "this was HTTPS" header,
   // so req.secure is true there and the session cookie gets the Secure flag
   app.set("trust proxy", 1);
+
+  // Security headers on every response (pages, API, errors), and don't advertise "Express"
+  app.disable("x-powered-by");
+  app.use(securityHeaders);
 
   app.use(express.json({ limit: "100kb" })); // read JSON request bodies into req.body (big bodies → 413)
 
