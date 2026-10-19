@@ -1,0 +1,38 @@
+[
+  {
+    "personaId": "maya",
+    "eventType": "agent_chat",
+    "actor": {
+      "type": "agent",
+      "personaId": "maya"
+    },
+    "summary": "Chat reply using get_overview; 2 item(s) of personal data redacted.",
+    "payload": {
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "tools": [
+        "get_overview"
+      ],
+      "actionIds": [],
+      "redactions": 2,
+      "messageLength": 86
+    },
+    "seq": 17,
+    "ts": "2026-10-19T06:47:29.284Z",
+    "prevHash": "fc42c9c0002d1e54840938095cd7e1ea4c157b3c114ee6d58e95701e2bbee0dd",
+    "hash": "5bac85d28f2d80565f02e79c74337a59ffcca7709a91358506e48056a0182475"
+  },
+  {
+    "personaId": "maya",
+    "eventType": "signed_in",
+    "actor": {
+      "type": "user",
+      "personaId": "maya"
+    },
+    "summary": "Signed in.",
+    "payload": {},
+    "seq": 16,
+    "ts": "2026-10-19T06:47:22.581Z",
+    "prevHash": "adc8b65db8bcd3e64de2e9484c5d319f97d1b0e1ace84f5eed7c52cc3ae0c03b",
+    "hash": "fc42c9c0002d1e54840938095cd7e1ea4c157b3c114ee6d58e95701e2bbee0dd"
+  }
+]

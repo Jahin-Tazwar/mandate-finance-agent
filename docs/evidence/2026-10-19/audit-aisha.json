@@ -1,0 +1,207 @@
+[
+  {
+    "personaId": "aisha",
+    "eventType": "action_approved",
+    "actor": {
+      "type": "user",
+      "personaId": "aisha"
+    },
+    "summary": "Approved with PIN and executed: Pay CityPower $132.80.",
+    "payload": {
+      "actionId": "act_9"
+    },
+    "seq": 26,
+    "ts": "2026-10-19T06:48:27.586Z",
+    "prevHash": "93ef60ab762a6c04126152463291e948585e36d355ba52d482e65eddb1a29df4",
+    "hash": "5fe2054fe0a5870a6eed860f8a9e7a466f6ba8cf7352fbb85390f5dcc8f5e0e0"
+  },
+  {
+    "personaId": "aisha",
+    "eventType": "document_uploaded",
+    "actor": {
+      "type": "user",
+      "personaId": "aisha"
+    },
+    "summary": "Uploaded a bill: CityPower $132.80 due Oct 20.",
+    "payload": {
+      "filename": "bill_01_citypower.pdf",
+      "billId": "bill_doc_2",
+      "extracted": {
+        "payee": "CityPower",
+        "amountCents": 13280,
+        "dueDate": "2026-10-20",
+        "accountNumber": "CP-88213"
+      },
+      "warnings": [],
+      "redirects": [],
+      "actionIds": [
+        "act_10"
+      ]
+    },
+    "seq": 25,
+    "ts": "2026-10-19T06:48:26.968Z",
+    "prevHash": "4135c8d01a3d41d93edeb5a512641ff2c01b435ed4af9ac9316eb73d1063b27b",
+    "hash": "93ef60ab762a6c04126152463291e948585e36d355ba52d482e65eddb1a29df4"
+  },
+  {
+    "personaId": "aisha",
+    "eventType": "action_denied",
+    "actor": {
+      "type": "agent",
+      "personaId": "aisha"
+    },
+    "summary": "Blocked: Pay CityPower $132.80 (source: untrusted).",
+    "payload": {
+      "actionId": "act_10",
+      "action": {
+        "source": "untrusted",
+        "type": "payment",
+        "fromAccount": "checking",
+        "payee": "CityPower",
+        "amountCents": 13280,
+        "billId": "bill_doc_2"
+      },
+      "decision": "deny",
+      "tier": "L0",
+      "reasons": [
+        "A payment of CityPower $132.80 is already waiting for your approval. MoneyWise won't pay the same bill twice."
+      ],
+      "rationale": "From your uploaded bill: CityPower $132.80, due Oct 20."
+    },
+    "seq": 24,
+    "ts": "2026-10-19T06:48:26.968Z",
+    "prevHash": "998a052ca82923d1c72d8c163c0d3e48c9713fb37b14a76ebd4f18382ccfd3ea",
+    "hash": "4135c8d01a3d41d93edeb5a512641ff2c01b435ed4af9ac9316eb73d1063b27b"
+  },
+  {
+    "personaId": "aisha",
+    "eventType": "document_uploaded",
+    "actor": {
+      "type": "user",
+      "personaId": "aisha"
+    },
+    "summary": "Uploaded a bill: CityPower $132.80 due Oct 20.",
+    "payload": {
+      "filename": "bill_01_citypower.pdf",
+      "billId": "bill_doc_1",
+      "extracted": {
+        "payee": "CityPower",
+        "amountCents": 13280,
+        "dueDate": "2026-10-20",
+        "accountNumber": "CP-88213"
+      },
+      "warnings": [],
+      "redirects": [],
+      "actionIds": [
+        "act_9"
+      ]
+    },
+    "seq": 23,
+    "ts": "2026-10-19T06:48:26.679Z",
+    "prevHash": "765b2a7271e62fa16b7ff9115484ae13609be4addc0dd6a1c03d8e8f8150db4d",
+    "hash": "998a052ca82923d1c72d8c163c0d3e48c9713fb37b14a76ebd4f18382ccfd3ea"
+  },
+  {
+    "personaId": "aisha",
+    "eventType": "action_pending_approval",
+    "actor": {
+      "type": "agent",
+      "personaId": "aisha"
+    },
+    "summary": "Waiting for approval: Pay CityPower $132.80 (source: untrusted).",
+    "payload": {
+      "actionId": "act_9",
+      "action": {
+        "source": "untrusted",
+        "type": "payment",
+        "fromAccount": "checking",
+        "payee": "CityPower",
+        "amountCents": 13280,
+        "billId": "bill_doc_1"
+      },
+      "decision": "require_approval",
+      "tier": "L2",
+      "reasons": [
+        "This came from a document, so it always needs your approval.",
+        "$132.80 is over your $100 limit per payment."
+      ],
+      "rationale": "From your uploaded bill: CityPower $132.80, due Oct 20."
+    },
+    "seq": 22,
+    "ts": "2026-10-19T06:48:26.678Z",
+    "prevHash": "aa68bc3a5a1974f60a303f72d4f42b19621a5a9b900bdca7420d625ed073bbe4",
+    "hash": "765b2a7271e62fa16b7ff9115484ae13609be4addc0dd6a1c03d8e8f8150db4d"
+  },
+  {
+    "personaId": "aisha",
+    "eventType": "agent_chat",
+    "actor": {
+      "type": "agent",
+      "personaId": "aisha"
+    },
+    "summary": "Chat reply using get_bills, get_overview, propose_payment; proposed 1 action(s).",
+    "payload": {
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "tools": [
+        "get_bills",
+        "get_overview",
+        "propose_payment",
+        "propose_payment",
+        "get_bills"
+      ],
+      "actionIds": [
+        "act_8"
+      ],
+      "redactions": 0,
+      "messageLength": 67
+    },
+    "seq": 21,
+    "ts": "2026-10-19T06:48:26.302Z",
+    "prevHash": "42f171a2a984759810ccf10b6cd6c46e442870015cb7535ae90a01ae9d244fa4",
+    "hash": "aa68bc3a5a1974f60a303f72d4f42b19621a5a9b900bdca7420d625ed073bbe4"
+  },
+  {
+    "personaId": "aisha",
+    "eventType": "action_executed",
+    "actor": {
+      "type": "agent",
+      "personaId": "aisha"
+    },
+    "summary": "Executed: Pay CityPower $81.13 (source: agent).",
+    "payload": {
+      "actionId": "act_8",
+      "action": {
+        "source": "agent",
+        "type": "payment",
+        "payee": "CityPower",
+        "amountCents": 8113,
+        "fromAccount": "checking",
+        "billId": "bill_aisha_citypower_20261022"
+      },
+      "decision": "allow",
+      "tier": "L3",
+      "reasons": [
+        "Payments up to $100 to payees you've paid before are automatic."
+      ],
+      "rationale": "Pay CityPower bill"
+    },
+    "seq": 20,
+    "ts": "2026-10-19T06:48:04.659Z",
+    "prevHash": "0a415bf37ffd2141b09efd24142e48103f2d122b6c39c2b4ae2478ad6634ecc5",
+    "hash": "42f171a2a984759810ccf10b6cd6c46e442870015cb7535ae90a01ae9d244fa4"
+  },
+  {
+    "personaId": "aisha",
+    "eventType": "signed_in",
+    "actor": {
+      "type": "user",
+      "personaId": "aisha"
+    },
+    "summary": "Signed in.",
+    "payload": {},
+    "seq": 19,
+    "ts": "2026-10-19T06:47:49.677Z",
+    "prevHash": "6bff8169cd7d1569a8fe903624a4183516483844d13987c47218b9407505496a",
+    "hash": "0a415bf37ffd2141b09efd24142e48103f2d122b6c39c2b4ae2478ad6634ecc5"
+  }
+]

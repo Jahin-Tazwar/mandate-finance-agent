@@ -179,7 +179,7 @@ flowchart TB
 ### Slide 10: Testing & Evaluation · 0:30 · Measured results only
 **Message:** *We measured it.*
 
-- **209 automated tests pass**, including **29 red-team tests** (hidden instructions in bills, look-alike company names, splitting payments, a fooled AI, "admin mode" tricks, paying the same bill twice).
+- **212 automated tests pass**, including **29 red-team tests** (hidden instructions in bills, look-alike company names, splitting payments, a fooled AI, "admin mode" tricks, paying the same bill twice).
 - **Security lead's manual attack list:** add the PASS / FAIL count when it's done (due **Sun Oct 18**).
 - **0 known vulnerabilities** in the production libraries (npm audit).
 - **Speed:** data screens answer in **1–3 ms**. AI chat on the free development model: **3.1 s**, **8.5 s**, and **55.2 s** for a question needing several lookups.
