@@ -1,0 +1,21 @@
+{
+  "base": "https://moneywise-ffhs.onrender.com/api",
+  "startedAt": "2026-10-19T07:12:26.016Z",
+  "model": "anthropic/claude-haiku-5.5",
+  "only": [
+    "A16"
+  ],
+  "story": [],
+  "results": [
+    {
+      "id": "A16",
+      "name": "Leaking personal data to the AI",
+      "expected": "Card number and email removed before the AI sees them",
+      "observed": [
+        "Audit: Chat reply; 2 item(s) of personal data redacted.",
+        "Audit stores the message text: false"
+      ],
+      "status": "PASS"
+    }
+  ]
+}
