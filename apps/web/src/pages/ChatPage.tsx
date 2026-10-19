@@ -115,7 +115,7 @@ export function ChatPage({ persona, onApprove, onRefresh }: {
         {messages.map((item) => <div className={`chat-message message-${item.speaker}`} key={item.id}>
           <span className="message-label">{item.speaker === "you" ? "You" : "Agent · suggestions are checked against your rules"}</span>
           {item.tools.map((tool, index) => <small className="tool-trace" key={`${tool}-${index}`}>{tool}</small>)}
-          {item.text && <p className="message-bubble">{item.text}</p>}
+          {item.text && <p className="message-bubble">{item.speaker === "agent" ? withBold(item.text) : item.text}</p>}
           {item.busy && !item.text && <p className="message-bubble"><span className="spinner" /> Thinking…</p>}
           {item.error && <p className="inline-error" role="alert">{item.error} You can try again.</p>}
           {item.actions.map((action) => <ActionCard key={action.id} action={action} onApprove={onApprove} onReject={reject} />)}
@@ -137,4 +137,15 @@ export function ChatPage({ persona, onApprove, onRefresh }: {
       </form>
     </section>
   </div>;
+}
+
+/**
+ * Shows the AI's **bold** as bold text, e.g. "has **$2,753.90**" → has <strong>$2,753.90</strong>.
+ * Builds React elements, never HTML, so text from the AI can't inject markup.
+ * (A "**" that isn't closed yet, mid-stream, stays as typed until its partner arrives.)
+ */
+function withBold(text: string) {
+  // split with a capture group: every odd entry is the text between a pair of **
+  const parts = text.split(/\*\*(.+?)\*\*/g);
+  return parts.map((part, index) => (index % 2 === 1 ? <strong key={index}>{part}</strong> : part));
 }
