@@ -273,7 +273,7 @@ Red-teaming our own product found real problems. Each was fixed, given a test, a
 | **Data resets on restart** | In-memory store by design (synthetic data) | Real deployment: a database with encryption at rest |
 | **Lockout counters in memory** | Same reason | Real deployment: shared store |
 | **AI provider dependency** | Chat needs OpenRouter | Every number comes from code; if the AI is down, the app still works without chat |
-| **Free AI models during development** | Free models may keep prompts (development switch) | Before the demo: paid models, switch removed |
+| **AI provider keeps prompts?** | During development, free models needed a switch allowing providers that may keep prompts | Done Oct 19: paid models only, switch removed; `data_collection: "deny"` in force |
 | **Testnet, not mainnet** | Anchoring proves the idea without real money | Real deployment: mainnet or a bank-run ledger |
 | **No formal verification of the engine** | Out of scope for the hackathon | 29 red-team tests and the evidence script |
 
@@ -282,7 +282,7 @@ Red-teaming our own product found real problems. Each was fixed, given a test, a
 ## 10. Before submission (checklist)
 
 - [x] `AUTH_DISABLED` off on Render (verified Oct 18)
-- [ ] Remove `LLM_ALLOW_PROVIDER_TRAINING` on Render; switch to paid models
+- [x] `LLM_ALLOW_PROVIDER_TRAINING` removed on Render; paid models (`anthropic/claude-haiku-5.5`, verified Oct 19)
 - [x] Security headers (5.10), live since Oct 19
 - [x] Full evidence run on the live site (Oct 19): all 19 passed
 - [ ] Manual-test screenshots in section 7; attack list results filled in
